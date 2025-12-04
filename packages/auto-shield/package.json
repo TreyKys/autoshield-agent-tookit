@@ -8,11 +8,11 @@
     "start": "tsc && node dist/autoShield.js"
   },
   "dependencies": {
-    "thirdweb": "^5.0.0",
-    "dotenv": "^16.4.5"
+    "dotenv": "^16.4.5",
+    "thirdweb": "^5.0.0"
   },
   "devDependencies": {
-    "typescript": "^5.0.0",
-    "@types/node": "^20.0.0"
+    "@types/node": "^20.0.0",
+    "typescript": "^5.9.2"
   }
 }

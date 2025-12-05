@@ -7,17 +7,17 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "deploy:target": "node scripts/deploy-target.js"
+    "deploy:target": "tsx scripts/deploy-target.ts"
   },
   "dependencies": {
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
+    "clsx": "^2.1.1",
+    "dotenv": "^16.4.5",
     "framer-motion": "^11.0.8",
     "lucide-react": "^0.344.0",
-    "thirdweb": "^5.55.0",
-    "clsx": "^2.1.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
     "tailwind-merge": "^2.3.0",
-    "dotenv": "^16.4.5"
+    "thirdweb": "^5.55.0"
   },
   "devDependencies": {
     "@types/react": "^18.2.64",
@@ -26,6 +26,7 @@
     "autoprefixer": "^10.4.18",
     "postcss": "^8.4.35",
     "tailwindcss": "^3.4.1",
+    "tsx": "^4.21.0",
     "typescript": "^5.2.2",
     "vite": "^5.1.4",
     "vite-plugin-node-polyfills": "^0.21.0"

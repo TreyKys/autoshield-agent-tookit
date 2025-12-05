@@ -3,7 +3,7 @@ import { createThirdwebClient } from "thirdweb";
 import { privateKeyToAccount } from "thirdweb/wallets";
 import { deployContract } from "thirdweb/deploys";
 import { defineChain } from "thirdweb/chains";
-import { VulnerableBoxArtifact } from "../src/contracts/VulnerableBox.js"; // Importing the artifact
+import { VulnerableBoxArtifact } from "../src/contracts/VulnerableBox"; // Importing the artifact
 import dotenv from "dotenv";
 import path from "path";
 import { fileURLToPath } from 'url';

@@ -1,8 +1,8 @@
 import { ModelMessage, LanguageModel, StreamTextResult, ToolSet, streamText, wrapLanguageModel } from 'ai';
-import { isMiddlewareService, MiddlewareService, StreamTextWithMessagesParams, StreamTextWithPromptParams } from './middleware';
-import { NullShotAgent } from '../agent';
-import { AgentEnv } from '../env';
-import { Service } from '../service';
+import { isMiddlewareService, MiddlewareService, StreamTextWithMessagesParams, StreamTextWithPromptParams } from './middleware.js';
+import { NullShotAgent } from '../agent.js';
+import { AgentEnv } from '../env.js';
+import { Service } from '../service.js';
 
 /**
  * A message from the AI UI SDK - Could not find this in the ai package

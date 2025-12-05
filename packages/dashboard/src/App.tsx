@@ -8,6 +8,7 @@ import { Brain } from './components/Brain';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ConnectButton, useActiveAccount } from "thirdweb/react";
 import { createThirdwebClient } from 'thirdweb';
+import { callAgent } from './lib/agent-client';
 
 // Client for ConnectButton
 const client = createThirdwebClient({
@@ -20,7 +21,14 @@ function App() {
   const [txData, setTxData] = useState({ hash: '', impl: '' });
   const account = useActiveAccount();
 
-  const handleActivate = () => {
+  const handleActivate = async () => {
+    // Call the NullShot Agent
+    try {
+        await callAgent("Auto-Shield, secure the network");
+    } catch (error) {
+        console.error("Failed to activate agent:", error);
+    }
+
     // Start Sequence
     setAct('hunter');
 

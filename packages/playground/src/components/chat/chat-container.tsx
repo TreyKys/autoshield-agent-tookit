@@ -388,7 +388,7 @@ export function ChatContainer({
   useEffect(() => {
     const existingConfig = loadAIModelConfig();
     // Workers AI can work without API key, others need it
-    const hasRequiredAuth = existingConfig.provider === 'workers-ai' || existingConfig.apiKey;
+    const hasRequiredAuth = existingConfig && (existingConfig.provider === 'workers-ai' || existingConfig.apiKey);
     
     if (existingConfig && hasRequiredAuth && existingConfig.model) {
       const modelConfig: ModelConfig = {
@@ -448,7 +448,7 @@ export function ChatContainer({
     };
 
     loadAvailableModels();
-  }, [selectedModel.id, modelConfig?.provider]);
+  }, [selectedModel.id, modelConfig?.provider]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Session management effects (only if enabled)
   useEffect(() => {

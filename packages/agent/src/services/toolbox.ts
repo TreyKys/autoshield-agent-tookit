@@ -1,9 +1,9 @@
 import { Hono } from 'hono';
-import { ExternalService } from '../service';
-import { AgentEnv } from '../env';
+import { ExternalService } from '../service.js';
+import { AgentEnv } from '../env.js';
 import { ToolSet } from 'ai';
-import { MiddlewareService } from '../aisdk/middleware';
-import { NullShotMCPClientManager } from '../client/mcp-client-manager';
+import { MiddlewareService } from '../aisdk/middleware.js';
+import { NullShotMCPClientManager } from '../client/mcp-client-manager.js';
 
 /**
  * Configuration for an MCP tool server

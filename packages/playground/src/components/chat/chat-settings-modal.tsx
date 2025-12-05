@@ -173,7 +173,7 @@ export function ChatSettingsModal({
         setAvailableModels(fallbackModels);
         
         // Auto-select first model if no model is currently selected OR if current model doesn't belong to this provider
-        const currentModelValid = formData.model && fallbackModels.some(m => m.id === formData.model);
+         const currentModelValid = formData.model && fallbackModels.some((m: any) => m.id === formData.model);
         if ((!formData.model || !currentModelValid) && fallbackModels.length > 0) {
           setFormData((prev) => ({
             ...prev,
@@ -210,7 +210,7 @@ export function ChatSettingsModal({
         setAvailableModels(fallbackModels);
         
         // Auto-select first fallback model if no model is currently selected OR if current model doesn't belong to this provider
-        const currentModelValid = formData.model && fallbackModels.some(m => m.id === formData.model);
+         const currentModelValid = formData.model && fallbackModels.some((m: any) => m.id === formData.model);
         if ((!formData.model || !currentModelValid) && fallbackModels.length > 0) {
           setFormData((prev) => ({
             ...prev,
@@ -326,7 +326,7 @@ export function ChatSettingsModal({
     setRefreshingModels(true);
     try {
       const models = await refreshModelsCache(
-        formData.provider,
+        formData.provider as any,
         formData.apiKey
       );
       setAvailableModels(

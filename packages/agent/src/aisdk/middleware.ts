@@ -16,7 +16,7 @@ import {
 	StepResult,
 } from 'ai';
 
-import { Service } from '../service';
+import { Service } from '../service.js';
 
 // Type for ID generator function
 type IDGenerator = () => string;

@@ -1,5 +1,5 @@
 /**
  * Export all services
  */
-export * from '../service';
-export * from './toolbox';
+export * from '../service.js';
+export * from './toolbox.js';

@@ -4,14 +4,12 @@
  * This worker implements a Durable Object-based Agent system
  * with AI capabilities using Vercel AI SDK.
  */
-
 // Export the Durable Object class
-export * from './agent.js';
-export * from './env.js';
-export * from './router.js';
-export * from './service.js';
+export * from './agent';
+export * from './env';
+export * from './router';
+export * from './service';
 // Export AI SDK components
-export * from './aisdk/index.js';
-
+export * from './aisdk';
 // Export services
-export * from './services/index.js';
+export * from './services';

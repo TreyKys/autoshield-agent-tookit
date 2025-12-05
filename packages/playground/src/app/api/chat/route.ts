@@ -303,6 +303,7 @@ export async function POST(request: NextRequest) {
     const result = streamText({
       model: {
         ...baseModel,
+        specificationVersion: 'v2',
         supportedUrls: (baseModel as any).supportedUrls ?? [],
       },
       system: otherParams.systemPrompt,

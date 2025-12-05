@@ -1,0 +1,14 @@
+[
+  {
+    "id": "contract-1",
+    "address": "0x1234567890abcdef1234567890abcdef12345678",
+    "name": "Vulnerable DeFi Vault",
+    "status": "Vulnerable"
+  },
+  {
+    "id": "contract-2",
+    "address": "0xabcdef1234567890abcdef1234567890abcdef12",
+    "name": "Safe Token",
+    "status": "Safe"
+  }
+]

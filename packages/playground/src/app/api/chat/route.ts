@@ -299,8 +299,12 @@ export async function POST(request: NextRequest) {
       toolsCount: Object.keys(mcpTools).length
     });
 
+    const baseModel = providerInstance(model);
     const result = streamText({
-      model: providerInstance(model),
+      model: {
+        ...baseModel,
+        supportedUrls: (baseModel as any).supportedUrls ?? [],
+      },
       system: otherParams.systemPrompt,
       messages,
       temperature: otherParams.temperature,

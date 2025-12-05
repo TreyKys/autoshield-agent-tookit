@@ -19,7 +19,7 @@
   ],
   "scripts": {
     "dev": "wrangler dev -c ../mcp-proxy/wrangler.jsonc --port 6050 & next dev",
-    "build": "pnpm run build:lib",
+    "build": "pnpm run build:lib && pnpm run build:app",
     "build:app": "next build",
     "build:lib": "tsup --config tsup.config.ts --tsconfig tsconfig.lib.json",
     "start": "next start",

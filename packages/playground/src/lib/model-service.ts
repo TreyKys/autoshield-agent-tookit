@@ -345,9 +345,10 @@ export async function getModels(provider: 'openai' | 'anthropic' | 'workers-ai' 
   }
 }
 
+import { getCurrentModelConfig } from './storage';
+
 // Get all models for all configured providers
 export async function getAllAvailableModels(): Promise<AIModel[]> {
-  const { getCurrentModelConfig } = await import('./storage');
   const config = getCurrentModelConfig();
   
   if (!config) {

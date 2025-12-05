@@ -7,6 +7,8 @@
  * - NEXT_PUBLIC_ADDITIONAL_AGENTS: Additional agents in format "Name|URL,Name2|URL2"
  */
 
+import { getCustomAgents } from './agent-storage';
+
 export interface Agent {
   name: string;
   url: string;
@@ -37,17 +39,12 @@ export function parseAdditionalAgents(): Agent[] {
 }
 
 export function getAllAgents(): Agent[] {
-  // Dynamically import storage functions to avoid SSR issues
   let customAgents: Agent[] = [];
   
-  if (typeof window !== 'undefined') {
-    try {
-      // Dynamic import to avoid SSR issues
-      const { getCustomAgents } = require('./agent-storage');
-      customAgents = getCustomAgents();
-    } catch (error) {
-      console.error('Error loading custom agents:', error);
-    }
+  try {
+    customAgents = getCustomAgents();
+  } catch (error) {
+    console.error('Error loading custom agents:', error);
   }
   
   return [DEFAULT_AGENT, ...parseAdditionalAgents(), ...customAgents];

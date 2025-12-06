@@ -5,9 +5,10 @@ import targetsData from '../../data/targets';
 
 interface HunterProps {
   agentMessage?: string;
+  onTargetsFound?: (targets: any[]) => void;
 }
 
-export function Hunter({ agentMessage }: HunterProps) {
+export function Hunter({ agentMessage, onTargetsFound }: HunterProps) {
   const [scannedTargets, setScannedTargets] = useState<any[]>([]);
   const [scanStatus, setScanStatus] = useState("Initializing Scan...");
 
@@ -21,7 +22,9 @@ export function Hunter({ agentMessage }: HunterProps) {
 
     const timer2 = setTimeout(() => {
         if (targetsData && targetsData.contracts) {
-            setScannedTargets([...targetsData.contracts]);
+            const targets = [...targetsData.contracts];
+            setScannedTargets(targets);
+            if (onTargetsFound) onTargetsFound(targets);
         }
         setScanStatus("Scan Complete.");
     }, 2500);

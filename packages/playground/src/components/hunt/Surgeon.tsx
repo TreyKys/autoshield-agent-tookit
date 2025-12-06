@@ -24,9 +24,10 @@ const chain = defineChain({
 
 interface SurgeonProps {
   onComplete: (txHash: string, newImpl: string) => void;
+  targetAddress?: string;
 }
 
-export function Surgeon({ onComplete }: SurgeonProps) {
+export function Surgeon({ onComplete, targetAddress }: SurgeonProps) {
   const account = useActiveAccount();
   const { mutate: sendTx, isPending } = useSendTransaction();
   const [status, setStatus] = useState<'idle' | 'deploying' | 'upgrading' | 'success'>('idle');
@@ -62,9 +63,9 @@ export function Surgeon({ onComplete }: SurgeonProps) {
       setStatus('upgrading');
 
       // Step 2: Call upgradeTo on Target
-      const targetAddress = process.env.NEXT_PUBLIC_TARGET_ADDRESS;
+      // const targetAddress = process.env.NEXT_PUBLIC_TARGET_ADDRESS;
       if (!targetAddress) {
-        throw new Error("No Target Address found. Please set NEXT_PUBLIC_TARGET_ADDRESS.");
+        throw new Error("No Target Address provided by Hunter. Scan may have failed.");
       }
 
       const targetContract = getContract({

@@ -45,6 +45,7 @@ function HuntAppInner() {
   const [proxyId, setProxyId] = useState<string | null>(null);
   const [chatSessionId, setChatSessionId] = useState<string | null>(null);
   const [modelConfig, setModelConfig] = useState<any>(null);
+  const [discoveredTargets, setDiscoveredTargets] = useState<any[]>([]);
 
   // Initialize MCP/Chat setup
   useEffect(() => {
@@ -187,7 +188,10 @@ function HuntAppInner() {
                             exit={{ opacity: 0, scale: 1.1 }}
                             className="w-full h-full relative"
                         >
-                            <Hunter agentMessage={lastAssistantMessage} />
+                            <Hunter
+                                agentMessage={lastAssistantMessage}
+                                onTargetsFound={setDiscoveredTargets}
+                            />
 
                             {/* Manual Advance Button for Demo Control */}
                             <div className="absolute bottom-8 right-8">
@@ -231,7 +235,10 @@ function HuntAppInner() {
                             exit={{ opacity: 0, scale: 1.1 }}
                             className="w-full h-full"
                         >
-                            <Surgeon onComplete={handleSurgeryComplete} />
+                            <Surgeon
+                                onComplete={handleSurgeryComplete}
+                                targetAddress={discoveredTargets.length > 0 ? discoveredTargets[0].address : undefined}
+                            />
                         </motion.div>
                     )}
 

@@ -213,13 +213,45 @@ export async function fetchMCPRegistry(): Promise<MCPServerDirectory> {
   }
 
   // Fetch fresh data from API
-  const registryUrl = process.env.NEXT_PUBLIC_MCP_REGISTRY_URL || DEFAULT_REGISTRY_URL;
+  let registryUrl = process.env.NEXT_PUBLIC_MCP_REGISTRY_URL || DEFAULT_REGISTRY_URL;
+
+  // Validate URL format
+  try {
+    new URL(registryUrl);
+  } catch (e) {
+    console.warn(`⚠️ Invalid registry URL "${registryUrl}", falling back to default`);
+    registryUrl = DEFAULT_REGISTRY_URL;
+  }
+
   console.log('🌐 Fetching from:', registryUrl);
 
   try {
-    const response = await fetch(registryUrl);
+    let response;
+    try {
+      response = await fetch(registryUrl);
+    } catch (fetchError) {
+      // If the first fetch fails (e.g., due to bad URL or network issue), try the default if we haven't already
+      if (registryUrl !== DEFAULT_REGISTRY_URL) {
+        console.warn(`⚠️ Failed to fetch from "${registryUrl}", falling back to default:`, fetchError);
+        console.log('🌐 Fetching from:', DEFAULT_REGISTRY_URL);
+        response = await fetch(DEFAULT_REGISTRY_URL);
+      } else {
+        throw fetchError;
+      }
+    }
+
     if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      // If specific URL failed with non-200, try default as fallback if we haven't used it yet
+      if (registryUrl !== DEFAULT_REGISTRY_URL) {
+        console.warn(`⚠️ HTTP error from "${registryUrl}", falling back to default`);
+        console.log('🌐 Fetching from:', DEFAULT_REGISTRY_URL);
+        response = await fetch(DEFAULT_REGISTRY_URL);
+        if (!response.ok) {
+           throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+      } else {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
     }
 
     const registryData: RegistryResponse = await response.json();

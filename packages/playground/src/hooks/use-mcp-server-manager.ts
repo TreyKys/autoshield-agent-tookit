@@ -127,7 +127,21 @@ interface McpServerManagerActions {
 export type UseMcpServerManagerReturn = McpServerManagerState & McpServerManagerActions;
 
 function getMcpProxyWsUrl(): string {
-  const baseUrl = process.env.NEXT_PUBLIC_MCP_PROXY_WS_URL || 'ws://localhost:6050/client/ws';
+  // Ensure we have a valid WebSocket URL
+  let baseUrl = process.env.NEXT_PUBLIC_MCP_PROXY_WS_URL || 'ws://localhost:6050/client/ws';
+
+  // Fix relative URLs if they appear (e.g., from incorrect env var)
+  if (baseUrl.startsWith('/')) {
+    baseUrl = `ws://localhost:6050${baseUrl}`;
+  } else if (!baseUrl.includes('://')) {
+    baseUrl = `ws://localhost:6050/${baseUrl.replace(/^\/+/, '')}`;
+  }
+
+  // Ensure we're hitting the correct endpoint path if not specified
+  if (!baseUrl.includes('/client/ws')) {
+    baseUrl = baseUrl.endsWith('/') ? `${baseUrl}client/ws` : `${baseUrl}/client/ws`;
+  }
+
   return buildProxyUrl(baseUrl);
 }
 

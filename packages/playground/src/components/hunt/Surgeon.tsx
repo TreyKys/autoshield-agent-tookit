@@ -6,7 +6,9 @@ import { getContract, prepareContractCall, defineChain, createThirdwebClient } f
 import { deployContract } from "thirdweb/deploys";
 import { VulnerableBoxArtifact } from './contracts/VulnerableBox';
 import { SafeBoxArtifact } from './contracts/SafeBox';
+import { PausableBoxArtifact } from './contracts/PausableBox';
 import { Button } from './ui';
+import targetsData from '../../data/targets';
 
 // Client initialization
 const client = createThirdwebClient({
@@ -30,26 +32,41 @@ interface SurgeonProps {
 export function Surgeon({ onComplete, targetAddress }: SurgeonProps) {
   const account = useActiveAccount();
   const { mutate: sendTx, isPending } = useSendTransaction();
-  const [status, setStatus] = useState<'idle' | 'deploying' | 'upgrading' | 'success'>('idle');
+  const [status, setStatus] = useState<'idle' | 'analyzing' | 'deploying' | 'upgrading' | 'pausing' | 'success'>('idle');
   const [error, setError] = useState<string | null>(null);
+  const [actionType, setActionType] = useState<'upgrade' | 'pause' | null>(null);
 
   // Auto-execute if account is connected, otherwise wait
   useEffect(() => {
-    if (account && status === 'idle') {
-      executeSurgery();
+    if (account && status === 'idle' && targetAddress) {
+      determineAction();
     }
-  }, [account, status]);
+  }, [account, status, targetAddress]);
 
-  const executeSurgery = async () => {
-    if (!account) return;
+  const determineAction = () => {
+    setStatus('analyzing');
+    const target = targetsData.contracts.find(t => t.address.toLowerCase() === targetAddress?.toLowerCase());
+
+    // Default to upgrade if not found or explicit
+    const action = (target as any)?.action || 'upgrade';
+    setActionType(action);
+
+    // Proceed to execute
+    if (action === 'upgrade') {
+        executeUpgrade();
+    } else if (action === 'pause') {
+        executePause();
+    }
+  };
+
+  const executeUpgrade = async () => {
+    if (!account || !targetAddress) return;
     setStatus('deploying');
     setError(null);
 
     try {
       // Step 1: Deploy Safe Implementation
       console.log("Deploying Safe Implementation...");
-      // For demo speed, we might want to skip this if we had a pre-deployed one,
-      // but to be "REAL", we deploy it.
 
       const safeImplementationAddress = await deployContract({
         client,
@@ -62,12 +79,6 @@ export function Surgeon({ onComplete, targetAddress }: SurgeonProps) {
       console.log("Safe Implementation:", safeImplementationAddress);
       setStatus('upgrading');
 
-      // Step 2: Call upgradeTo on Target
-      // const targetAddress = process.env.NEXT_PUBLIC_TARGET_ADDRESS;
-      if (!targetAddress) {
-        throw new Error("No Target Address provided by Hunter. Scan may have failed.");
-      }
-
       const targetContract = getContract({
         client,
         chain,
@@ -77,7 +88,7 @@ export function Surgeon({ onComplete, targetAddress }: SurgeonProps) {
 
       const transaction = prepareContractCall({
         contract: targetContract,
-        method: "upgradeTo", // Assuming the ABI has this from the UUPS/Proxy logic or similar
+        method: "upgradeTo",
         params: [safeImplementationAddress]
       });
 
@@ -90,9 +101,6 @@ export function Surgeon({ onComplete, targetAddress }: SurgeonProps) {
         onError: (err) => {
             console.error("Upgrade Failed:", err);
             setError(err.message);
-            // For demo purposes, if it fails (e.g. not owner), we might still want to show the error
-            // or maybe simulate success if it's just a visual demo?
-            // The prompt says "Trigger the REAL...". So failure is real.
         }
       });
 
@@ -100,6 +108,46 @@ export function Surgeon({ onComplete, targetAddress }: SurgeonProps) {
       console.error("Surgery Failed:", err);
       setError(err.message || "Unknown error");
     }
+  };
+
+  const executePause = async () => {
+      if (!account || !targetAddress) return;
+      setStatus('pausing');
+      setError(null);
+
+      try {
+          console.log("Pausing Contract...");
+
+          // Use PausableArtifact ABI
+          const targetContract = getContract({
+              client,
+              chain,
+              address: targetAddress,
+              abi: PausableBoxArtifact.abi
+          });
+
+          const transaction = prepareContractCall({
+              contract: targetContract,
+              method: "pause",
+              params: []
+          });
+
+          sendTx(transaction, {
+              onSuccess: (txReciept) => {
+                  console.log("Pause Success:", txReciept.transactionHash);
+                  setStatus('success');
+                  onComplete(txReciept.transactionHash, "PAUSED");
+              },
+              onError: (err) => {
+                  console.error("Pause Failed:", err);
+                  setError(err.message);
+              }
+          });
+
+      } catch (err: any) {
+          console.error("Pause Surgery Failed:", err);
+          setError(err.message || "Unknown error");
+      }
   };
 
   return (
@@ -113,25 +161,44 @@ export function Surgeon({ onComplete, targetAddress }: SurgeonProps) {
         <Activity className="w-24 h-24 relative z-10" />
       </motion.div>
 
-      <h2 className="text-3xl font-display mb-2">Executing Patch...</h2>
+      <h2 className="text-3xl font-display mb-2">
+          {status === 'pausing' ? "Executing Emergency Halt..." : "Executing Patch..."}
+      </h2>
 
       {/* Status Indicators */}
       <div className="mt-8 w-full max-w-md space-y-4">
-        <div className="flex items-center justify-between text-sm">
-           <span className={status === 'deploying' || status === 'upgrading' || status === 'success' ? "text-white" : "text-white/30"}>
-             1. Deploy Safe Impl
-           </span>
-           {status === 'deploying' && <span className="animate-pulse text-surgeon">Processing...</span>}
-           {(status === 'upgrading' || status === 'success') && <span className="text-green-500">Done</span>}
-        </div>
 
-        <div className="flex items-center justify-between text-sm">
-           <span className={status === 'upgrading' || status === 'success' ? "text-white" : "text-white/30"}>
-             2. Upgrade Proxy
-           </span>
-           {status === 'upgrading' && <span className="animate-pulse text-surgeon">Sign Tx...</span>}
-           {status === 'success' && <span className="text-green-500">Done</span>}
-        </div>
+        {/* Upgrade Flow UI */}
+        {actionType === 'upgrade' && (
+            <>
+                <div className="flex items-center justify-between text-sm">
+                    <span className={status === 'deploying' || status === 'upgrading' || status === 'success' ? "text-white" : "text-white/30"}>
+                        1. Deploy Safe Impl
+                    </span>
+                    {status === 'deploying' && <span className="animate-pulse text-surgeon">Processing...</span>}
+                    {(status === 'upgrading' || status === 'success') && <span className="text-green-500">Done</span>}
+                </div>
+
+                <div className="flex items-center justify-between text-sm">
+                    <span className={status === 'upgrading' || status === 'success' ? "text-white" : "text-white/30"}>
+                        2. Upgrade Proxy
+                    </span>
+                    {status === 'upgrading' && <span className="animate-pulse text-surgeon">Sign Tx...</span>}
+                    {status === 'success' && <span className="text-green-500">Done</span>}
+                </div>
+            </>
+        )}
+
+        {/* Pause Flow UI */}
+        {actionType === 'pause' && (
+             <div className="flex items-center justify-between text-sm">
+                <span className={status === 'pausing' || status === 'success' ? "text-white" : "text-white/30"}>
+                    1. Halt Protocol (Pause)
+                </span>
+                {status === 'pausing' && <span className="animate-pulse text-surgeon">Sign Tx...</span>}
+                {status === 'success' && <span className="text-green-500">Done</span>}
+             </div>
+        )}
 
         {/* Pulsing Bar */}
         <div className="h-2 bg-white/10 rounded-full overflow-hidden mt-6">

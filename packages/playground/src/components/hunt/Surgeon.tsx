@@ -14,7 +14,13 @@ const client = createThirdwebClient({
 });
 
 // Hedera Testnet
-const chain = defineChain(296);
+const chain = defineChain({
+  id: 296,
+  name: "Hedera Testnet",
+  nativeCurrency: { name: "HBAR", symbol: "HBAR", decimals: 18 },
+  rpc: "https://testnet.hashio.io/api",
+  testnet: true,
+});
 
 interface SurgeonProps {
   onComplete: (txHash: string, newImpl: string) => void;

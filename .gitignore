@@ -62,5 +62,5 @@ temp/
 tmp/
 .turbo 
 
-data/
+# data/
 *.db

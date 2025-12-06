@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Search, Bug, FileWarning } from 'lucide-react';
-import targetsData from '../../data/targets.json';
+import targetsData from '../../data/targets';
 
 interface HunterProps {
   agentMessage?: string;
@@ -21,7 +21,7 @@ export function Hunter({ agentMessage }: HunterProps) {
 
     const timer2 = setTimeout(() => {
         if (targetsData && targetsData.contracts) {
-            setScannedTargets(targetsData.contracts);
+            setScannedTargets([...targetsData.contracts]);
         }
         setScanStatus("Scan Complete.");
     }, 2500);

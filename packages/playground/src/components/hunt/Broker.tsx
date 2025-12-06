@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { HandCoins, TrendingUp, ShieldCheck, Database } from 'lucide-react';
-import curesData from '../../data/cures.json';
+import curesData from '../../data/cures';
 
 interface BrokerProps {
   agentMessage?: string;

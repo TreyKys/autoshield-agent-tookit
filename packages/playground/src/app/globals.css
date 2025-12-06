@@ -50,6 +50,17 @@
   --color-chat-thinking-animation: var(--chat-thinking-animation);
   --color-chat-thinking-duration: var(--chat-thinking-duration);
   --color-chat-text-animation: var(--chat-text-animation);
+
+  /* HUNT Dashboard Theme */
+  --color-midnight: #0f172a;
+  --color-hunter: #8b5cf6;
+  --color-broker: #f59e0b;
+  --color-surgeon: #dc2626;
+  --color-brain: #10b981;
+
+  --font-display: var(--font-stack-sans-notch), 'Stack Sans Notch', sans-serif;
+  --font-bitcount: var(--font-bitcount-prop-single), 'Bitcount Prop Single', system-ui;
+  --font-bricolage: var(--font-bricolage-grotesque), 'Bricolage Grotesque', sans-serif;
 }
 
 :root {
@@ -152,6 +163,14 @@
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
+  }
+
+  /* Font utilities */
+  .font-bitcount {
+    font-family: var(--font-bitcount);
+  }
+  .font-display {
+    font-family: var(--font-display);
   }
 }
 

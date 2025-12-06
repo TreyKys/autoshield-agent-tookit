@@ -266,11 +266,11 @@ export async function fetchMCPRegistry(): Promise<MCPServerDirectory> {
       throw new Error(`HTTP ${response.status}: ${response.statusText}`);
     }
 
-    const rawData = await response.json();
+    const rawData = await response.json() as any;
     let transformedServers: MCPServer[] = [];
 
     // Detect format
-    if (rawData.servers && rawData.servers.length > 0) {
+    if (rawData.servers && Array.isArray(rawData.servers) && rawData.servers.length > 0) {
        if (rawData.servers[0].server) {
            // Official format
            console.log('📦 Detected Official Registry format');

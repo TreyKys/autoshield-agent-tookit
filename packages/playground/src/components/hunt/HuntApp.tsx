@@ -11,11 +11,20 @@ import { Surgeon } from './Surgeon';
 import { Brain } from './Brain';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ConnectButton, useActiveAccount, ThirdwebProvider } from "thirdweb/react";
-import { createThirdwebClient } from 'thirdweb';
+import { createThirdwebClient, defineChain } from 'thirdweb';
 
 // Initialize Thirdweb client
 const client = createThirdwebClient({
   clientId: process.env.NEXT_PUBLIC_THIRDWEB_CLIENT_ID || "c06411514757049826317b6a782b137a", // Fallback or env
+});
+
+// Define Hedera Testnet Chain (ID 296)
+const hederaTestnet = defineChain({
+  id: 296,
+  name: "Hedera Testnet",
+  nativeCurrency: { name: "HBAR", symbol: "HBAR", decimals: 18 },
+  rpc: "https://testnet.hashio.io/api",
+  testnet: true,
 });
 
 // Main component wrapped in Provider
@@ -81,24 +90,48 @@ function HuntAppInner() {
   });
 
   const handleActivate = async () => {
-    if (!account) {
-        alert("Please connect wallet first");
-        return;
-    }
+    // if (!account) {
+    //    alert("Please connect wallet first");
+    //    return;
+    // }
 
     // Start Sequence
     setAct('hunter');
 
     // Trigger Agent
     try {
-        await append({
-            role: 'user',
-            content: "Auto-Shield, secure the network. Scan for vulnerabilities in the registry."
-        });
+        // Wait briefly for effect
+        setTimeout(async () => {
+             // We actually skip the 'Scan' phase of the Agent because the frontend already did it.
+             // We tell the agent to proceed to Broker/Surgeon logic directly or contextually.
+             // The prompt triggers the agent's persona.
+             await append({
+                role: 'user',
+                content: "Auto-Shield, secure the network. Targets identified. Proceed to patch."
+            });
+        }, 500);
+
     } catch (error) {
         console.error("Failed to activate agent:", error);
         setAct('inactive');
     }
+  };
+
+  // Handlers for manual transitions if needed by "Next" buttons in demo flow
+  // (In autonomous mode, the Agent drives it, but for the demo acts, we might want user clicks)
+
+  const handleScanComplete = () => {
+      setAct('broker');
+  };
+
+  const handleNegotiationComplete = () => {
+      // This is the "ACTIVATE" moment
+      setAct('surgeon');
+      // Trigger the agent if not already triggered, or trigger specific phase
+      append({
+          role: 'user',
+          content: "Negotiation complete. Authorized to execute upgrades."
+      });
   };
 
   const handleSurgeryComplete = (hash: string, impl: string) => {
@@ -129,7 +162,11 @@ function HuntAppInner() {
             </div>
 
             <div>
-                <ConnectButton client={client} theme="dark" />
+                <ConnectButton
+                    client={client}
+                    theme="dark"
+                    chains={[hederaTestnet]}
+                />
             </div>
             </div>
 
@@ -148,16 +185,19 @@ function HuntAppInner() {
                             initial={{ opacity: 0, scale: 0.9 }}
                             animate={{ opacity: 1, scale: 1 }}
                             exit={{ opacity: 0, scale: 1.1 }}
-                            className="w-full h-full"
+                            className="w-full h-full relative"
                         >
-                            {/* Pass agent status/messages to Hunter if needed */}
                             <Hunter agentMessage={lastAssistantMessage} />
-                            {/* Debug agent output */}
-                            {status === 'streaming' && (
-                                <div className="absolute bottom-4 left-4 p-2 bg-black/50 text-xs font-mono max-w-md truncate">
-                                    Agent: {lastAssistantMessage}
-                                </div>
-                            )}
+
+                            {/* Manual Advance Button for Demo Control */}
+                            <div className="absolute bottom-8 right-8">
+                                <button
+                                    onClick={handleScanComplete}
+                                    className="px-6 py-2 bg-hunter/20 border border-hunter text-hunter hover:bg-hunter/40 transition-all rounded uppercase text-sm tracking-widest font-bold"
+                                >
+                                    Proceed to Negotiation &rarr;
+                                </button>
+                            </div>
                         </motion.div>
                     )}
 
@@ -167,10 +207,19 @@ function HuntAppInner() {
                             initial={{ opacity: 0, scale: 0.9 }}
                             animate={{ opacity: 1, scale: 1 }}
                             exit={{ opacity: 0, scale: 1.1 }}
-                            className="w-full h-full"
+                            className="w-full h-full relative"
                         >
-                            {/* Broker likely needs the proposal text */}
                             <Broker agentMessage={lastAssistantMessage} />
+
+                            {/* "ACTIVATE" Button - The key trigger point */}
+                            <div className="absolute bottom-8 right-8">
+                                <button
+                                    onClick={handleNegotiationComplete}
+                                    className="px-8 py-3 bg-indigo-600 hover:bg-indigo-500 text-white shadow-[0_0_20px_rgba(79,70,229,0.5)] transition-all rounded uppercase text-sm tracking-[0.2em] font-bold border border-white/10"
+                                >
+                                    ACTIVATE AUTO-SHIELD
+                                </button>
+                            </div>
                         </motion.div>
                     )}
 

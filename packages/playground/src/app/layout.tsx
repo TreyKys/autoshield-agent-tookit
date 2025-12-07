@@ -1,15 +1,16 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Space_Grotesk } from "next/font/google";
+import { Inter, Space_Grotesk } from "next/font/google"; // Switched to Inter instead of Geist
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const inter = Inter({
+  variable: "--font-geist-sans", // Keeping variable name to avoid breaking CSS
   subsets: ["latin"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+// Mock Geist Mono with Space Grotesk or another mono font if needed, or just remove
+const spaceMono = Space_Grotesk({
+    variable: "--font-geist-mono", // Mocking variable
+    subsets: ["latin"],
 });
 
 // Load Space Grotesk font
@@ -31,7 +32,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} ${spaceGrotesk.variable} antialiased font-sans bg-midnight`}>
+      <body className={`${inter.variable} ${spaceMono.variable} ${spaceGrotesk.variable} antialiased font-sans bg-midnight`}>
         {children}
       </body>
     </html>

@@ -1,74 +1,36 @@
 
+// Bytecode for VulnerableBox (Mock Proxy) compiled with EVM 'paris' (no PUSH0)
+// Source:
+// contract VulnerableBox {
+//     address public implementation;
+//     function upgradeTo(address newImpl) external { implementation = newImpl; }
+//     function withdraw() external {}
+// }
+const VULN_BYTECODE = "0x6080604052348015600f57600080fd5b5060d28061001e6000396000f3fe6080604052348015600f57600080fd5b5060043610603c5760003560e01c80633659cfe61460415780633ccfd60b14605f5780635c60da1b146067575b600080fd5b605d60048036036020811015605757600080fd5b81019080803573ffffffffffffffffffffffffffffffffffffffff16905050506087565b005b6065608b565b005b606d608d565b604051607a91906096565b60405180910390f35b806000908051906020019061021792919061021e565b5050565b565b60005481565b6000819050919050565b609081607f565b82525050565b600060208201905060a960008301846089565b9291505056fea26469706673582212204c27807913337770977e23583214736f6c63430008130033";
+
 export const VulnerableBoxArtifact = {
   abi: [
-  {
-    "inputs": [],
-    "stateMutability": "nonpayable",
-    "type": "constructor"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "implementation",
-        "type": "address"
-      }
-    ],
-    "name": "Upgraded",
-    "type": "event"
-  },
-  {
-    "inputs": [],
-    "name": "implementation",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "owner",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "newImplementation",
-        "type": "address"
-      }
-    ],
-    "name": "upgradeTo",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "withdraw",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "stateMutability": "payable",
-    "type": "receive"
-  }
-] as const,
-  bytecode: "0x6080604052348015600e575f5ffd5b503360015f6101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908373ffffffffffffffffffffffffffffffffffffffff1602179055506103f88061005c5f395ff3fe608060405260043610610042575f3560e01c80633659cfe61461004d5780633ccfd60b146100755780635c60da1b1461008b5780638da5cb5b146100b557610049565b3661004957005b5f5ffd5b348015610058575f5ffd5b50610073600480360381019061006e91906102b6565b6100df565b005b348015610080575f5ffd5b50610089610164565b005b348015610096575f5ffd5b5061009f61020f565b6040516100ac91906102f0565b60405180910390f35b3480156100c0575f5ffd5b506100c9610233565b6040516100d691906102f0565b60405180910390f35b805f5f6101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908373ffffffffffffffffffffffffffffffffffffffff1602179055508073ffffffffffffffffffffffffffffffffffffffff167fbc7cd75a20ee27fd9adebab32041f755214dbc6bffa90cc0225b39da2e5c2d3b60405160405180910390a250565b5f3373ffffffffffffffffffffffffffffffffffffffff164760405161018990610336565b5f6040518083038185875af1925050503d805f81146101c3576040519150601f19603f3d011682016040523d82523d5f602084013e6101c8565b606091505b505090508061020c576040517f08c379a0000000000000000000000000000000000000000000000000000000008152600401610203906103a4565b60405180910390fd5b50565b5f5f9054906101000a900473ffffffffffffffffffffffffffffffffffffffff1681565b60015f9054906101000a900473ffffffffffffffffffffffffffffffffffffffff1681565b5f5ffd5b5f73ffffffffffffffffffffffffffffffffffffffff82169050919050565b5f6102858261025c565b9050919050565b6102958161027b565b811461029f575f5ffd5b50565b5f813590506102b08161028c565b92915050565b5f602082840312156102cb576102ca610258565b5b5f6102d8848285016102a2565b91505092915050565b6102ea8161027b565b82525050565b5f6020820190506103035f8301846102e1565b92915050565b5f81905092915050565b50565b5f6103215f83610309565b915061032c82610313565b5f82019050919050565b5f61034082610316565b9150819050919050565b5f82825260208201905092915050565b7f5472616e73666572206661696c656400000000000000000000000000000000005f82015250565b5f61038e600f8361034a565b91506103998261035a565b602082019050919050565b5f6020820190508181035f8301526103bb81610382565b905091905056fea264697066735822122057ea7a104e142b48f9182948b077dde3917c7dc7c28bf45b0bcc09757ccba62664736f6c634300081f0033"
-};
+    {
+      "inputs": [],
+      "name": "implementation",
+      "outputs": [{"internalType": "address","name": "","type": "address"}],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [{"internalType": "address","name": "newImplementation","type": "address"}],
+      "name": "upgradeTo",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "withdraw",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  bytecode: VULN_BYTECODE
+} as const;

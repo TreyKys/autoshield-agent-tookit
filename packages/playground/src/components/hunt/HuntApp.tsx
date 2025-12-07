@@ -9,6 +9,7 @@ import { Hunter } from './Hunter';
 import { Broker } from './Broker';
 import { Surgeon } from './Surgeon';
 import { Brain } from './Brain';
+import { Deployer } from './Deployer';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ConnectButton, useActiveAccount, ThirdwebProvider } from "thirdweb/react";
 import { createThirdwebClient, defineChain } from 'thirdweb';
@@ -40,7 +41,7 @@ export default function HuntApp() {
 function HuntAppInner() {
   const [activeTab, setActiveTab] = useState('shield');
   const [act, setAct] = useState<'inactive' | 'hunter' | 'broker' | 'surgeon' | 'brain'>('inactive');
-  const [txData, setTxData] = useState({ hash: '', impl: '' });
+  const [txResults, setTxResults] = useState<any[]>([]);
   const account = useActiveAccount();
   const [proxyId, setProxyId] = useState<string | null>(null);
   const [chatSessionId, setChatSessionId] = useState<string | null>(null);
@@ -135,8 +136,8 @@ function HuntAppInner() {
       });
   };
 
-  const handleSurgeryComplete = (hash: string, impl: string) => {
-    setTxData({ hash, impl });
+  const handleSurgeryComplete = (results: any[]) => {
+    setTxResults(results);
     // Transition to Brain
     setTimeout(() => {
         setAct('brain');
@@ -145,7 +146,8 @@ function HuntAppInner() {
 
   const handleReset = () => {
     setAct('inactive');
-    setTxData({ hash: '', impl: '' });
+    setTxResults([]);
+    setDiscoveredTargets([]);
   };
 
   // Extract data from messages for components
@@ -153,7 +155,7 @@ function HuntAppInner() {
 
   return (
         <div className="flex min-h-screen bg-midnight text-white font-sans overflow-hidden">
-        <Sidebar activeTab={activeTab} />
+        <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
 
         <div className="flex-1 relative flex flex-col">
             {/* Header / Top Bar */}
@@ -174,85 +176,101 @@ function HuntAppInner() {
             {/* Main Content Area */}
             <main className="flex-1 relative flex items-center justify-center p-8">
                 <AnimatePresence mode="wait">
-                    {act === 'inactive' && (
-                        <motion.div key="inactive" className="w-full h-full" exit={{ opacity: 0 }}>
-                            <Hero onActivate={handleActivate} />
-                        </motion.div>
-                    )}
+                  {/* Deployer Tab */}
+                  {activeTab === 'deployer' ? (
+                      <motion.div
+                          key="deployer"
+                          initial={{ opacity: 0, x: 20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          exit={{ opacity: 0, x: -20 }}
+                          className="w-full h-full"
+                      >
+                          <Deployer />
+                      </motion.div>
+                  ) : (
+                    /* Shield Tab Logic */
+                    <>
+                      {act === 'inactive' && (
+                          <motion.div key="inactive" className="w-full h-full" exit={{ opacity: 0 }}>
+                              <Hero onActivate={handleActivate} />
+                          </motion.div>
+                      )}
 
-                    {act === 'hunter' && (
-                        <motion.div
-                            key="hunter"
-                            initial={{ opacity: 0, scale: 0.9 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 1.1 }}
-                            className="w-full h-full relative"
-                        >
-                            <Hunter
-                                agentMessage={lastAssistantMessage}
-                                onTargetsFound={setDiscoveredTargets}
-                            />
+                      {act === 'hunter' && (
+                          <motion.div
+                              key="hunter"
+                              initial={{ opacity: 0, scale: 0.9 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              exit={{ opacity: 0, scale: 1.1 }}
+                              className="w-full h-full relative"
+                          >
+                              <Hunter
+                                  agentMessage={lastAssistantMessage}
+                                  onTargetsFound={setDiscoveredTargets}
+                              />
 
-                            {/* Manual Advance Button for Demo Control */}
-                            <div className="absolute bottom-8 right-8">
-                                <button
-                                    onClick={handleScanComplete}
-                                    className="px-6 py-2 bg-hunter/20 border border-hunter text-hunter hover:bg-hunter/40 transition-all rounded uppercase text-sm tracking-widest font-bold"
-                                >
-                                    Proceed to Negotiation &rarr;
-                                </button>
-                            </div>
-                        </motion.div>
-                    )}
+                              {/* Manual Advance Button for Demo Control */}
+                              <div className="absolute bottom-8 right-8">
+                                  <button
+                                      onClick={handleScanComplete}
+                                      className="px-6 py-2 bg-hunter/20 border border-hunter text-hunter hover:bg-hunter/40 transition-all rounded uppercase text-sm tracking-widest font-bold"
+                                  >
+                                      Proceed to Negotiation &rarr;
+                                  </button>
+                              </div>
+                          </motion.div>
+                      )}
 
-                    {act === 'broker' && (
-                        <motion.div
-                            key="broker"
-                            initial={{ opacity: 0, scale: 0.9 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 1.1 }}
-                            className="w-full h-full relative"
-                        >
-                            <Broker agentMessage={lastAssistantMessage} />
+                      {act === 'broker' && (
+                          <motion.div
+                              key="broker"
+                              initial={{ opacity: 0, scale: 0.9 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              exit={{ opacity: 0, scale: 1.1 }}
+                              className="w-full h-full relative"
+                          >
+                              <Broker agentMessage={lastAssistantMessage} />
 
-                            {/* "ACTIVATE" Button - The key trigger point */}
-                            <div className="absolute bottom-8 right-8">
-                                <button
-                                    onClick={handleNegotiationComplete}
-                                    className="px-8 py-3 bg-indigo-600 hover:bg-indigo-500 text-white shadow-[0_0_20px_rgba(79,70,229,0.5)] transition-all rounded uppercase text-sm tracking-[0.2em] font-bold border border-white/10"
-                                >
-                                    ACTIVATE AUTO-SHIELD
-                                </button>
-                            </div>
-                        </motion.div>
-                    )}
+                              {/* "ACTIVATE" Button - The key trigger point */}
+                              <div className="absolute bottom-8 right-8">
+                                  <button
+                                      onClick={handleNegotiationComplete}
+                                      className="px-8 py-3 bg-indigo-600 hover:bg-indigo-500 text-white shadow-[0_0_20px_rgba(79,70,229,0.5)] transition-all rounded uppercase text-sm tracking-[0.2em] font-bold border border-white/10"
+                                  >
+                                      ACTIVATE AUTO-SHIELD
+                                  </button>
+                              </div>
+                          </motion.div>
+                      )}
 
-                    {act === 'surgeon' && (
-                        <motion.div
-                            key="surgeon"
-                            initial={{ opacity: 0, scale: 0.9 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 1.1 }}
-                            className="w-full h-full"
-                        >
-                            <Surgeon
-                                onComplete={handleSurgeryComplete}
-                                targetAddress={discoveredTargets.length > 0 ? discoveredTargets[0].address : undefined}
-                            />
-                        </motion.div>
-                    )}
+                      {act === 'surgeon' && (
+                          <motion.div
+                              key="surgeon"
+                              initial={{ opacity: 0, scale: 0.9 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              exit={{ opacity: 0, scale: 1.1 }}
+                              className="w-full h-full"
+                          >
+                              <Surgeon
+                                  onComplete={handleSurgeryComplete}
+                                  targets={discoveredTargets}
+                              />
+                          </motion.div>
+                      )}
 
-                    {act === 'brain' && (
-                        <motion.div
-                            key="brain"
-                            initial={{ opacity: 0, scale: 0.9 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 1.1 }}
-                            className="w-full h-full"
-                        >
-                            <Brain txHash={txData.hash} newImpl={txData.impl} onReset={handleReset} />
-                        </motion.div>
-                    )}
+                      {act === 'brain' && (
+                          <motion.div
+                              key="brain"
+                              initial={{ opacity: 0, scale: 0.9 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              exit={{ opacity: 0, scale: 1.1 }}
+                              className="w-full h-full"
+                          >
+                              <Brain results={txResults} onReset={handleReset} />
+                          </motion.div>
+                      )}
+                    </>
+                  )}
                 </AnimatePresence>
             </main>
         </div>

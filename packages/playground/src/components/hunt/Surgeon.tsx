@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Zap, AlertOctagon, Activity } from 'lucide-react';
+import { Zap, AlertOctagon, Activity, CheckCircle, Clock } from 'lucide-react';
 import { useActiveAccount, useSendTransaction } from "thirdweb/react";
 import { getContract, prepareContractCall, defineChain, createThirdwebClient } from "thirdweb";
 import { deployContract } from "thirdweb/deploys";
@@ -8,7 +8,6 @@ import { VulnerableBoxArtifact } from './contracts/VulnerableBox';
 import { SafeBoxArtifact } from './contracts/SafeBox';
 import { PausableBoxArtifact } from './contracts/PausableBox';
 import { Button } from './ui';
-import targetsData from '../../data/targets';
 
 // Client initialization
 const client = createThirdwebClient({
@@ -25,130 +24,117 @@ const chain = defineChain({
 });
 
 interface SurgeonProps {
-  onComplete: (txHash: string, newImpl: string) => void;
-  targetAddress?: string;
+  onComplete: (results: any[]) => void;
+  targets: any[];
 }
 
-export function Surgeon({ onComplete, targetAddress }: SurgeonProps) {
+export function Surgeon({ onComplete, targets }: SurgeonProps) {
   const account = useActiveAccount();
-  const { mutate: sendTx, isPending } = useSendTransaction();
-  const [status, setStatus] = useState<'idle' | 'analyzing' | 'deploying' | 'upgrading' | 'pausing' | 'success'>('idle');
+  const { mutateAsync: sendTx } = useSendTransaction();
+  const [status, setStatus] = useState<'idle' | 'processing' | 'success'>('idle');
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [results, setResults] = useState<any[]>([]);
+  const [currentAction, setCurrentAction] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
-  const [actionType, setActionType] = useState<'upgrade' | 'pause' | null>(null);
 
-  // Auto-execute if account is connected, otherwise wait
+  // Auto-execute if account is connected
   useEffect(() => {
-    if (account && status === 'idle' && targetAddress) {
-      determineAction();
+    if (account && status === 'idle' && targets.length > 0) {
+      processQueue();
     }
-  }, [account, status, targetAddress]);
+  }, [account, status, targets]);
 
-  const determineAction = () => {
-    setStatus('analyzing');
-    const target = targetsData.contracts.find(t => t.address.toLowerCase() === targetAddress?.toLowerCase());
+  const processQueue = async () => {
+      setStatus('processing');
+      const finalResults = [];
 
-    // Default to upgrade if not found or explicit
-    const action = (target as any)?.action || 'upgrade';
-    setActionType(action);
+      for (let i = 0; i < targets.length; i++) {
+          setCurrentIndex(i);
+          const target = targets[i];
+          const action = (target as any)?.action || 'upgrade';
+          setCurrentAction(`Processing ${target.name} (${action})...`);
 
-    // Proceed to execute
-    if (action === 'upgrade') {
-        executeUpgrade();
-    } else if (action === 'pause') {
-        executePause();
-    }
+          try {
+              let result;
+              if (action === 'upgrade') {
+                  result = await executeUpgrade(target.address);
+              } else {
+                  result = await executePause(target.address);
+              }
+              finalResults.push({ ...target, ...result, success: true });
+          } catch (err: any) {
+              console.error(`Failed to process ${target.name}:`, err);
+              finalResults.push({ ...target, success: false, error: err.message });
+              // We continue to the next one even if one fails
+          }
+      }
+
+      setResults(finalResults);
+      setStatus('success');
+      onComplete(finalResults);
   };
 
-  const executeUpgrade = async () => {
-    if (!account || !targetAddress) return;
-    setStatus('deploying');
-    setError(null);
+  const executeUpgrade = async (targetAddress: string) => {
+    console.log(`Upgrading ${targetAddress}...`);
 
-    try {
-      // Step 1: Deploy Safe Implementation
-      console.log("Deploying Safe Implementation...");
-
-      const safeImplementationAddress = await deployContract({
+    // Step 1: Deploy Safe Implementation
+    const safeImplementationAddress = await deployContract({
         client,
         chain,
-        account,
+        account: account!,
         bytecode: SafeBoxArtifact.bytecode as `0x${string}`,
         abi: SafeBoxArtifact.abi,
-      });
+    });
 
-      console.log("Safe Implementation:", safeImplementationAddress);
-      setStatus('upgrading');
-
-      const targetContract = getContract({
+    // Step 2: Call upgradeTo
+    const targetContract = getContract({
         client,
         chain,
         address: targetAddress,
         abi: VulnerableBoxArtifact.abi
-      });
+    });
 
-      const transaction = prepareContractCall({
+    const transaction = prepareContractCall({
         contract: targetContract,
         method: "upgradeTo",
         params: [safeImplementationAddress]
-      });
+    });
 
-      sendTx(transaction, {
-        onSuccess: (txReciept) => {
-            console.log("Upgrade Success:", txReciept.transactionHash);
-            setStatus('success');
-            onComplete(txReciept.transactionHash, safeImplementationAddress);
-        },
-        onError: (err) => {
-            console.error("Upgrade Failed:", err);
-            setError(err.message);
-        }
-      });
+    const receipt = await sendTx(transaction);
 
-    } catch (err: any) {
-      console.error("Surgery Failed:", err);
-      setError(err.message || "Unknown error");
-    }
+    return {
+        type: 'upgrade',
+        txHash: receipt.transactionHash,
+        newImplementation: safeImplementationAddress
+    };
   };
 
-  const executePause = async () => {
-      if (!account || !targetAddress) return;
-      setStatus('pausing');
-      setError(null);
+  const executePause = async (targetAddress: string) => {
+      console.log(`Pausing ${targetAddress}...`);
 
-      try {
-          console.log("Pausing Contract...");
+      const targetContract = getContract({
+          client,
+          chain,
+          address: targetAddress,
+          abi: PausableBoxArtifact.abi
+      });
 
-          // Use PausableArtifact ABI
-          const targetContract = getContract({
-              client,
-              chain,
-              address: targetAddress,
-              abi: PausableBoxArtifact.abi
-          });
+      const transaction = prepareContractCall({
+          contract: targetContract,
+          method: "pause",
+          params: []
+      });
 
-          const transaction = prepareContractCall({
-              contract: targetContract,
-              method: "pause",
-              params: []
-          });
+      const receipt = await sendTx(transaction);
 
-          sendTx(transaction, {
-              onSuccess: (txReciept) => {
-                  console.log("Pause Success:", txReciept.transactionHash);
-                  setStatus('success');
-                  onComplete(txReciept.transactionHash, "PAUSED");
-              },
-              onError: (err) => {
-                  console.error("Pause Failed:", err);
-                  setError(err.message);
-              }
-          });
-
-      } catch (err: any) {
-          console.error("Pause Surgery Failed:", err);
-          setError(err.message || "Unknown error");
-      }
+      return {
+          type: 'pause',
+          txHash: receipt.transactionHash,
+          status: 'PAUSED'
+      };
   };
+
+  const progressPercentage = ((currentIndex) / (targets.length || 1)) * 100;
 
   return (
     <div className="flex flex-col items-center justify-center h-full text-surgeon">
@@ -162,68 +148,65 @@ export function Surgeon({ onComplete, targetAddress }: SurgeonProps) {
       </motion.div>
 
       <h2 className="text-3xl font-display mb-2">
-          {status === 'pausing' ? "Executing Emergency Halt..." : "Executing Patch..."}
+          {status === 'success' ? "All Patches Applied." : "Executing Batch Fixes..."}
       </h2>
 
-      {/* Status Indicators */}
+      {/* Progress UI */}
       <div className="mt-8 w-full max-w-md space-y-4">
 
-        {/* Upgrade Flow UI */}
-        {actionType === 'upgrade' && (
-            <>
-                <div className="flex items-center justify-between text-sm">
-                    <span className={status === 'deploying' || status === 'upgrading' || status === 'success' ? "text-white" : "text-white/30"}>
-                        1. Deploy Safe Impl
-                    </span>
-                    {status === 'deploying' && <span className="animate-pulse text-surgeon">Processing...</span>}
-                    {(status === 'upgrading' || status === 'success') && <span className="text-green-500">Done</span>}
-                </div>
+        <div className="flex items-center justify-between text-sm text-white/70">
+            <span>Progress</span>
+            <span>{currentIndex + (status === 'success' ? 0 : 1)} / {targets.length}</span>
+        </div>
 
-                <div className="flex items-center justify-between text-sm">
-                    <span className={status === 'upgrading' || status === 'success' ? "text-white" : "text-white/30"}>
-                        2. Upgrade Proxy
-                    </span>
-                    {status === 'upgrading' && <span className="animate-pulse text-surgeon">Sign Tx...</span>}
-                    {status === 'success' && <span className="text-green-500">Done</span>}
-                </div>
-            </>
-        )}
+        {/* Progress Bar */}
+        <div className="h-4 bg-white/10 rounded-full overflow-hidden relative">
+           <motion.div
+             className="h-full bg-surgeon"
+             initial={{ width: 0 }}
+             animate={{ width: `${status === 'success' ? 100 : progressPercentage}%` }}
+             transition={{ duration: 0.5 }}
+           />
+           {status === 'processing' && (
+                <motion.div
+                    className="absolute inset-0 bg-white/20"
+                    initial={{ x: '-100%' }}
+                    animate={{ x: '100%' }}
+                    transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
+                />
+           )}
+        </div>
 
-        {/* Pause Flow UI */}
-        {actionType === 'pause' && (
-             <div className="flex items-center justify-between text-sm">
-                <span className={status === 'pausing' || status === 'success' ? "text-white" : "text-white/30"}>
-                    1. Halt Protocol (Pause)
-                </span>
-                {status === 'pausing' && <span className="animate-pulse text-surgeon">Sign Tx...</span>}
-                {status === 'success' && <span className="text-green-500">Done</span>}
+        <div className="text-center font-mono text-xs text-surgeon h-6 mt-2">
+            {status === 'processing' ? currentAction : "Operation Complete"}
+        </div>
+
+        {/* Current Target Details */}
+        {status === 'processing' && targets[currentIndex] && (
+             <div className="mt-4 p-4 glass-panel border-surgeon/30 rounded flex items-center justify-between">
+                <div>
+                    <div className="text-xs text-white/50 uppercase">Targeting</div>
+                    <div className="text-white font-bold">{targets[currentIndex].name}</div>
+                </div>
+                <div className="text-right">
+                    <div className="text-xs text-white/50 uppercase">Action</div>
+                    <div className="text-surgeon font-bold uppercase">{targets[currentIndex].action}</div>
+                </div>
              </div>
         )}
 
-        {/* Pulsing Bar */}
-        <div className="h-2 bg-white/10 rounded-full overflow-hidden mt-6">
-           <motion.div
-             className="h-full bg-surgeon"
-             animate={{
-               width: ["0%", "100%"],
-               opacity: [0.5, 1, 0.5]
-             }}
-             transition={{ duration: 1.5, repeat: Infinity }}
-           />
-        </div>
+        {/* Wallet Prompt */}
+        {!account && (
+            <div className="mt-4 text-center text-white/60 animate-pulse border border-dashed border-white/20 p-4 rounded">
+                Please connect your wallet to authorize surgery.
+            </div>
+        )}
 
         {/* Error State */}
         {error && (
             <div className="mt-4 p-4 bg-red-900/20 border border-red-500/50 rounded text-red-200 text-sm">
                 Error: {error}
                 <Button onClick={() => setStatus('idle')} className="mt-2 w-full">Retry</Button>
-            </div>
-        )}
-
-        {/* Wallet Prompt */}
-        {!account && (
-            <div className="mt-4 text-center text-white/60 animate-pulse">
-                Please connect your wallet to authorize surgery.
             </div>
         )}
       </div>

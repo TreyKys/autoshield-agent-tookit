@@ -1,5 +1,5 @@
 import { Hono } from 'hono';
-import { AgentEnv } from './env';
+import { AgentEnv } from './env.js';
 import { cors } from 'hono/cors';
 
 /*

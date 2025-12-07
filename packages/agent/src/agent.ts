@@ -2,8 +2,8 @@
 
 import { Hono } from 'hono';
 import { HTTPException } from 'hono/http-exception';
-import { AgentEnv } from './env';
-import { Service, isExternalService } from './service';
+import { AgentEnv } from './env.js';
+import { Service, isExternalService } from './service.js';
 
 /**
  * The Null Shot Standard for Agents.

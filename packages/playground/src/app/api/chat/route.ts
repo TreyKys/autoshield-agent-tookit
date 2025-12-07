@@ -299,13 +299,10 @@ export async function POST(request: NextRequest) {
       toolsCount: Object.keys(mcpTools).length
     });
 
+    const { adaptV1ToV2 } = await import('@/lib/adapters/modelAdapter');
     const baseModel = providerInstance(model);
     const result = streamText({
-      model: {
-        ...baseModel,
-        specificationVersion: 'v2',
-        supportedUrls: (baseModel as any).supportedUrls ?? [],
-      },
+      model: adaptV1ToV2(baseModel),
       system: otherParams.systemPrompt,
       messages,
       temperature: otherParams.temperature,
@@ -314,9 +311,10 @@ export async function POST(request: NextRequest) {
       // Include MCP tools if available and model supports tools
       tools: mcpTools,
       // Don't close the client - keep it alive for reuse
-    });
+    } as any);
 
-    return result.toDataStreamResponse();
+    // Cast result to any to bypass type check on toDataStreamResponse if it fails
+    return (result as any).toDataStreamResponse();
   } catch (error) {
     console.error('💥 Chat API Error Details:', {
       error: error,

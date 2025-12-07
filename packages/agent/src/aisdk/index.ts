@@ -1,5 +1,5 @@
 /**
  * Export all services
  */
-export * from './agent';
-export * from './middleware';
+export * from './agent.js';
+export * from './middleware.js';

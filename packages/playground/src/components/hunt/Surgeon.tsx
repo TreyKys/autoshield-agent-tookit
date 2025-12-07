@@ -78,8 +78,7 @@ export function Surgeon({ onComplete, targetAddress }: SurgeonProps) {
       const transaction = prepareContractCall({
         contract: targetContract,
         method: "upgradeTo", // Assuming the ABI has this from the UUPS/Proxy logic or similar
-        params: [safeImplementationAddress],
-        gas: BigInt(200000) // Explicit gas limit to avoid estimation issues on older Hedera nodes
+        params: [safeImplementationAddress]
       });
 
       sendTx(transaction, {

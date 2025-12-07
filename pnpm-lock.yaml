@@ -4,73 +4,9 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
-catalogs:
-  default:
-    '@ai-sdk/anthropic':
-      specifier: ^2.0.1
-      version: 2.0.15
-    '@ai-sdk/deepseek':
-      specifier: ^1.0.18
-      version: 1.0.18
-    '@ai-sdk/google':
-      specifier: ^2.0.14
-      version: 2.0.14
-    '@ai-sdk/openai':
-      specifier: ^2.0.23
-      version: 2.0.23
-    '@ai-sdk/xai':
-      specifier: ^2.0.20
-      version: 2.0.20
-    '@cloudflare/vitest-pool-workers':
-      specifier: 0.8.66
-      version: 0.8.66
-    '@cloudflare/workers-types':
-      specifier: ^4.20250823.0
-      version: 4.20250829.0
-    '@modelcontextprotocol/sdk':
-      specifier: ^1.17.4
-      version: 1.17.4
-    '@types/node':
-      specifier: ^20.19.9
-      version: 20.19.11
-    '@vitest/runner':
-      specifier: ~3.2.0
-      version: 3.2.4
-    '@vitest/snapshot':
-      specifier: ~3.2.0
-      version: 3.2.4
-    '@vitest/ui':
-      specifier: ~3.2.0
-      version: 3.2.4
-    ai:
-      specifier: ^5.0.27
-      version: 5.0.28
-    esbuild:
-      specifier: 0.25.4
-      version: 0.25.4
-    typescript:
-      specifier: ^5.8.3
-      version: 5.9.2
-    vitest:
-      specifier: ~3.2.0
-      version: 3.2.4
-    workers-ai-provider:
-      specifier: ^2.0.0
-      version: 2.0.0
-    wrangler:
-      specifier: ^4.32.0
-      version: 4.33.1
-    zod:
-      specifier: ^3.25.76
-      version: 3.25.76
-
 importers:
 
   .:
-    dependencies:
-      solc:
-        specifier: ^0.8.31
-        version: 0.8.31
     devDependencies:
       '@changesets/cli':
         specifier: ^2.29.5

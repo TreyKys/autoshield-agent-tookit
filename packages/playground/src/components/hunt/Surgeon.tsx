@@ -104,8 +104,9 @@ export function Surgeon({ onComplete }: SurgeonProps) {
             account,
             bytecode: BatchExecutorArtifact.bytecode as `0x${string}`,
             abi: BatchExecutorArtifact.abi,
-            // @ts-ignore - params is valid for constructor args in deployContract
-            params: [TREASURY_ACCOUNT]
+            constructorParams: {
+                _treasury: TREASURY_ACCOUNT
+            }
         });
         addLog(`Batch Executor Active: ${batchExecutorAddress}`);
 

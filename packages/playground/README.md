@@ -1,318 +1,93 @@
-# @xava-labs/playground
+# HUNT: The Autonomous Smart Contract Immunologist
 
-A comprehensive React component library for building MCP (Model Context Protocol) server management interfaces and AI chat experiences.
+## Overview
+**HUNT** is a decentralized AI agent that acts as an autonomous immunologist for the blockchain. Built on the **NullShot Agent Framework** and the **Model Context Protocol (MCP)**, HUNT proactively scans mempools and smart contracts for vulnerabilities. Instead of just alerting a human (who might be sleeping), HUNT autonomously negotiates a "cure" with the protocol’s governance, deploys a verified patch from its "Library of Cures," and secures the asset on-chain before an attacker can exploit it.
 
-## Installation
+### Tagline
+*The Autonomous Smart Contract Immunologist.*
 
-```bash
-npm install @xava-labs/playground
-# or
-yarn add @xava-labs/playground
-```
+---
 
-## Usage
+## Objectives & Alignment
 
-### Complete Playground Component
+### A. Raising Awareness of NullShot Agent & MCP
+HUNT demonstrates the power of the **Model Context Protocol (MCP)** by moving beyond simple text generation. We utilize MCP to bridge the gap between the Large Language Model (LLM) and on-chain state.
+- **MCP Implementation:** A custom MCP server exposes Hedera blockchain tools (`scan_contract`, `estimate_gas`, `submit_proposal`) as executable functions to the NullShot Agent.
+- **Framework Utility:** HUNT proves that the NullShot Framework can orchestrate complex, multi-step workflows—from code analysis (reading) to transaction execution (writing)—without human hand-holding.
 
-The easiest way to get started is with the complete playground component:
+### B. Innovation in Decentralized AI & Web3 Workflows
+Most current AI agents are passive observers. HUNT is an **active participant** in the economy.
+- **The "Library of Cures":** Unlike other AI dev tools that hallucinate (and often break) code, HUNT relies on a deterministic library of pre-verified, audited patches (e.g., standard ReentrancyGuards). The AI identifies the problem, but the solution is cryptographically verified and safe.
+- **Autonomous Negotiation:** HUNT innovates on the workflow by treating security as a market. It doesn't just patch; it negotiates a bounty for its services on-chain, creating a sustainable economic model for decentralized security.
 
-```tsx
-import { PlaygroundProvider, Playground } from '@xava-labs/playground';
-import '@xava-labs/playground/styles';
+### C. Engaging Blockchain Ecosystems (Hedera)
+We chose **Hedera** specifically to solve the "Race Condition" problem in autonomous security.
+- **Fair Ordering:** On other chains, if an agent tries to patch a vulnerability, a hacker can front-run the transaction. Hedera’s Hashgraph consensus ensures Fair Ordering, meaning if HUNT submits the patch first, it is processed first.
+- **Low-Latency Defense:** Hedera’s speed allows HUNT to operate in the brief window between a vulnerability being deployed and it being discovered by attackers.
 
-function App() {
-  return (
-    <PlaygroundProvider 
-      config={{
-        mcpProxyUrl: 'http://localhost:6050',
-        mcpProxyWsUrl: 'ws://localhost:6050/client/ws',
-        theme: 'dark',
-        defaultModelConfig: {
-          provider: 'openai',
-          apiKey: process.env.OPENAI_API_KEY || '',
-          model: 'gpt-4'
-        }
-      }}
-    >
-      <Playground />
-    </PlaygroundProvider>
-  );
-}
-```
+---
 
-### Individual Components
+## Architecture
 
-You can also use individual components for more customized integrations:
+Our current prototype operates on a 4-stage loop:
 
-```tsx
-import { 
-  PlaygroundProvider, 
-  ChatContainer, 
-  MCPServerDirectory, 
-  ModelSelector,
-  useConfigurableMcpServerManager 
-} from '@xava-labs/playground';
+1.  **The Hunter (Diagnosis):** The NullShot agent scans bytecode using Regex and AST parsing to identify specific vulnerability signatures (e.g. Unprotected UUPS Upgrades).
+2.  **The Broker (Negotiation):** The agent calculates a fix price + gas fees and proposes a fix to the target protocol (User).
+3.  **The Surgeon (Execution):** Upon approval (Payment), the agent retrieves the correct patch from the Library of Cures and executes the batch of upgrades via the Hedera network using its own secure wallet.
+4.  **The Brain (Learning):** Successful patches and operations are recorded immutably to the Hedera Consensus Service (HCS), updating the agent's context for future scans.
 
-function CustomInterface() {
-  return (
-    <PlaygroundProvider config={{ /* your config */ }}>
-      <div className="flex h-screen">
-        <div className="w-1/3">
-          <MCPServerDirectory 
-            onServerToggle={(server, enabled) => {
-              console.log(`${server.name} ${enabled ? 'enabled' : 'disabled'}`);
-            }}
-          />
-        </div>
-        <div className="flex-1">
-          <ChatContainer title="Custom Chat" />
-        </div>
-        <div className="w-1/4">
-          <ModelSelector onModelChange={(config) => console.log(config)} />
-        </div>
-      </div>
-    </PlaygroundProvider>
-  );
-}
-```
+---
 
-### Using Hooks
+## Setup & Installation
 
-Access MCP server management functionality directly:
-
-```tsx
-import { useConfigurableMcpServerManager, PlaygroundProvider } from '@xava-labs/playground';
-
-function ServerManager() {
-  const {
-    servers,
-    connected,
-    loading,
-    addServer,
-    deleteServer,
-    refreshServers
-  } = useConfigurableMcpServerManager();
-
-  const handleAddServer = async () => {
-    await addServer({
-      uniqueName: 'my-server',
-      command: 'npx',
-      args: ['my-mcp-server'],
-      env: { API_KEY: 'your-key' }
-    });
-  };
-
-  return (
-    <div>
-      <button onClick={handleAddServer}>Add Server</button>
-      <ul>
-        {servers.map(server => (
-          <li key={server.uniqueName}>{server.uniqueName}</li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-
-function App() {
-  return (
-    <PlaygroundProvider config={{ /* config */ }}>
-      <ServerManager />
-    </PlaygroundProvider>
-  );
-}
-```
-
-## Configuration
-
-### PlaygroundConfig
-
-```typescript
-interface PlaygroundConfig {
-  // Required: MCP Proxy URLs
-  mcpProxyUrl: string;           // HTTP URL for MCP proxy
-  mcpProxyWsUrl: string;         // WebSocket URL for real-time updates
-  
-  // Optional: API configuration
-  apiBaseUrl?: string;           // Base URL for API calls (default: '/api')
-  
-  // Optional: Default model configuration
-  defaultModelConfig?: {
-    provider: 'openai' | 'anthropic';
-    apiKey: string;
-    model: string;
-  };
-  
-  // Optional: UI configuration
-  theme?: 'dark' | 'light';      // Default: 'dark'
-  enabledFeatures?: {
-    chat?: boolean;              // Default: true
-    mcpServerDirectory?: boolean; // Default: true
-    modelSelector?: boolean;     // Default: true
-  };
-}
-```
+### Prerequisites
+- Node.js v22+
+- pnpm
+- A Hedera Testnet Account (ECDSA preferred)
+- ThirdWeb Client ID
 
 ### Environment Variables
-
-The playground supports the following environment variables:
-
-```bash
-# MCP Registry Configuration
-NEXT_PUBLIC_MCP_REGISTRY_URL=https://mcp-registry.nullshot.ai/latest.json  # Default registry URL
-NEXT_PUBLIC_MCP_PROXY_URL=http://localhost:6050                             # MCP proxy HTTP URL
-NEXT_PUBLIC_MCP_PROXY_WS_URL=ws://localhost:6050/client/ws                  # MCP proxy WebSocket URL
-
-# API Keys (for model providers)
-OPENAI_API_KEY=your_openai_api_key
-ANTHROPIC_API_KEY=your_anthropic_api_key
-```
-
-The `NEXT_PUBLIC_MCP_REGISTRY_URL` environment variable allows you to override the default MCP registry URL. This is useful for:
-- Using a custom/private MCP registry
-- Testing with a local registry during development
-- Using alternative registry endpoints
-
-### Playground Component Props
-
-```typescript
-interface PlaygroundProps {
-  className?: string;
-  style?: React.CSSProperties;
-  layout?: 'horizontal' | 'vertical';  // Default: 'horizontal'
-  showModelSelector?: boolean;         // Default: true
-  showMCPDirectory?: boolean;          // Default: true
-  showChat?: boolean;                  // Default: true
-}
-```
-
-## Setting Up MCP Proxy
-
-The playground requires an MCP proxy server to manage MCP servers. You can use the `@xava-labs/mcp-proxy` package:
+Create a `.env.local` file in `packages/playground/`:
 
 ```bash
-# Install the proxy
-npm install @xava-labs/mcp-proxy
+# ThirdWeb Configuration
+NEXT_PUBLIC_THIRDWEB_CLIENT_ID="your_client_id"
+THIRDWEB_SECRET_KEY="your_secret_key" # Required for server-side Agent execution
+THIRDWEB_PRIVATE_KEY="your_agent_private_key" # The Agent's Wallet (Must have HBAR)
 
-# Run the proxy
-npx wrangler dev --port 6050
+# Hedera Configuration
+NEXT_PUBLIC_TREASURY_ACCOUNT_ID="0.0.xxxxx" # Where user payments are sent
+NEXT_PUBLIC_HCS_TOPIC_ID="0.0.xxxxx" # Topic for Agent Logs
+HEDERA_ACCOUNT_ID="0.0.xxxxx" # For HCS Logging (if using SDK directly)
+HEDERA_PRIVATE_KEY="302..." # For HCS Logging
 ```
 
-Or set up your own proxy that implements the WebSocket protocol expected by the playground components.
+### Running the Application
 
-## Styling
+1.  **Install Dependencies:**
+    ```bash
+    pnpm install
+    ```
 
-The package includes default styles that can be imported:
+2.  **Start the Playground:**
+    ```bash
+    pnpm dev
+    ```
+    Access the app at `http://localhost:3000`.
 
-```tsx
-import '@xava-labs/playground/styles';
-```
+### Development Notes
+- The `Surgeon` executes upgrades via a server-side API Route (`/api/agent/fix`) to simulate a secure, autonomous agent environment.
+- The `Hunter` queries the Hedera Mirror Node directly to find contracts deployed by the connected user.
+- **Deployment:** The project is configured for Netlify deployment. Ensure all env vars are set in the Netlify dashboard.
 
-The components use Tailwind CSS classes. Make sure your project has Tailwind CSS configured, or the components may not display correctly.
+---
 
-## Examples
+## Future Roadmap
 
-### Complete MCP Development Environment
+-   **The HUNT Training Module (Simulation):** A "Sandbox Dojo" for AI agents to run thousands of simulations on a private Hedera shadow fork before touching mainnet.
+-   **The Open "Library of Cures":** Decentralizing the library so developers can submit new cures and earn royalties.
+-   **Cross-Chain Expansion:** Using Chainlink CCIP to monitor and patch contracts on other EVM chains from a single Hedera control center.
 
-```tsx
-import { PlaygroundProvider, Playground } from '@xava-labs/playground';
-import '@xava-labs/playground/styles';
+---
 
-export default function MCPDevelopmentEnvironment() {
-  return (
-    <PlaygroundProvider
-      config={{
-        mcpProxyUrl: process.env.NEXT_PUBLIC_MCP_PROXY_URL || 'http://localhost:6050',
-        mcpProxyWsUrl: process.env.NEXT_PUBLIC_MCP_PROXY_WS_URL || 'ws://localhost:6050/client/ws',
-        theme: 'dark',
-        defaultModelConfig: {
-          provider: 'anthropic',
-          apiKey: process.env.ANTHROPIC_API_KEY || '',
-          model: 'claude-3-5-sonnet-20241022'
-        }
-      }}
-    >
-      <Playground
-        layout="horizontal"
-        showModelSelector={true}
-        showMCPDirectory={true}
-        showChat={true}
-      />
-    </PlaygroundProvider>
-  );
-}
-```
-
-### Custom Chat Interface
-
-```tsx
-import { 
-  PlaygroundProvider, 
-  ChatContainer, 
-  useConfigurableMcpServerManager 
-} from '@xava-labs/playground';
-
-function CustomChat() {
-  const { servers, connected } = useConfigurableMcpServerManager();
-  
-  return (
-    <div className="h-screen flex flex-col">
-      <div className="bg-gray-100 p-4">
-        Connected Servers: {servers.length} | Status: {connected ? 'Connected' : 'Disconnected'}
-      </div>
-      <div className="flex-1">
-        <ChatContainer 
-          title="Custom MCP Chat"
-          showHeader={true}
-          className="h-full"
-        />
-      </div>
-    </div>
-  );
-}
-
-export default function App() {
-  return (
-    <PlaygroundProvider config={{ /* your config */ }}>
-      <CustomChat />
-    </PlaygroundProvider>
-  );
-}
-```
-
-## API Reference
-
-### Components
-
-- `PlaygroundProvider` - Configuration provider component
-- `Playground` - Complete playground interface
-- `ChatContainer` - AI chat interface
-- `MCPServerDirectory` - MCP server management UI
-- `ModelSelector` - AI model selection interface
-- `MCPServerItem` - Individual server item component
-- UI components: `Button`, `Drawer`, `Sheet`, `Label`, `Textarea`
-
-### Hooks
-
-- `usePlaygroundConfig()` - Access playground configuration
-- `useConfigurableMcpServerManager()` - MCP server management
-
-### Types
-
-- `PlaygroundConfig` - Configuration interface
-- `McpServer` - MCP server data structure
-- `PlaygroundProps` - Playground component props
-
-## Requirements
-
-- React 18+ or 19+
-- A running MCP proxy server
-- Tailwind CSS for styling
-
-## Development
-
-See the main repository for development setup instructions.
-
-## License
-
-MIT License - see LICENSE file for details.
+*HUNT is not just a tool; it is Active Defense Infrastructure. We are moving from "Code is Law" to "Code is Immune."*

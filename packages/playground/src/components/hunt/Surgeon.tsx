@@ -72,7 +72,7 @@ export function Surgeon({ onComplete, data }: SurgeonProps) {
               })
           });
 
-          const result = await response.json();
+          const result: any = await response.json();
 
           if (!response.ok) {
               throw new Error(result.error || "Agent execution failed");

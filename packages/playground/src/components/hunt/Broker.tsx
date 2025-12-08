@@ -20,6 +20,7 @@ const GAS_ESTIMATES = {
 interface BrokerProps {
   onComplete: (data: any) => void;
   targets: any[];
+  agentMessage?: string;
 }
 
 export function Broker({ onComplete, targets }: BrokerProps) {
@@ -40,7 +41,7 @@ export function Broker({ onComplete, targets }: BrokerProps) {
   const calculateQuote = () => {
       let cost = 0;
       let gas = 0;
-      const items = [];
+      const items: any[] = [];
 
       // 1. One-time Setup (Deploy Safe Impl) - applied once if upgrades exist
       const hasUpgrades = targets.some(t => t.action === 'upgrade');
@@ -135,7 +136,6 @@ export function Broker({ onComplete, targets }: BrokerProps) {
 
             <div className="flex gap-4">
                 <Button
-                    variant="outline"
                     className="flex-1 border-white/20 hover:bg-white/5 text-white/60"
                     onClick={() => { /* Cancel? */ }}
                 >

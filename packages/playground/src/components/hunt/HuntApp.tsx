@@ -135,8 +135,8 @@ function HuntAppInner() {
       });
   };
 
-  const handleSurgeryComplete = (hash: string, impl: string) => {
-    setTxData({ hash, impl });
+  const handleSurgeryComplete = (hash: string, result: any) => {
+    setTxData({ hash, impl: result });
     // Transition to Brain
     setTimeout(() => {
         setAct('brain');
@@ -237,7 +237,6 @@ function HuntAppInner() {
                         >
                             <Surgeon
                                 onComplete={handleSurgeryComplete}
-                                targetAddress={discoveredTargets.length > 0 ? discoveredTargets[0].address : undefined}
                             />
                         </motion.div>
                     )}
@@ -250,7 +249,7 @@ function HuntAppInner() {
                             exit={{ opacity: 0, scale: 1.1 }}
                             className="w-full h-full"
                         >
-                            <Brain txHash={txData.hash} newImpl={txData.impl} onReset={handleReset} />
+                            <Brain txHash={txData.hash} result={txData.impl} onReset={handleReset} />
                         </motion.div>
                     )}
                 </AnimatePresence>

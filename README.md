@@ -1,158 +1,103 @@
-# 🌐 NullShot - Typescript Agent Framework
+# HUNT: The Autonomous Smart Contract Immunologist
 
 <div align="center">
-  <h3>Building the future of AI Agent Interoperability</h3>
-  <p><i>Pre-Alpha: This project is in active development.</i></p>
+  <h3>Active Defense Infrastructure for the Self-Healing Web3</h3>
+  <p><i>Submission for the Hedera Hackathon</i></p>
 </div>
 
-[![Discord](https://img.shields.io/discord/1358691448173625468?style=flat)](https://discord.gg/acwpp6zWEc)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+## 🎯 HUNT Tagline
+**The Autonomous Smart Contract Immunologist.**
 
-Welcome to a new paradigm in AI development. MCP provides the foundation for building intelligent, interoperable agents that can communicate, evolve, and generate value at the edge of the network.
+## 📖 Project Description
+HUNT is a decentralized AI agent that acts as an autonomous immunologist for the blockchain. Built on the **NullShot Agent Framework** and the **Model Context Protocol (MCP)**, HUNT proactively scans mempools and smart contracts for vulnerabilities. Instead of just alerting a human (who might be sleeping), HUNT autonomously negotiates a "cure" with the protocol’s governance, deploys a verified patch from its "Library of Cures," and secures the asset on-chain before an attacker can exploit it.
 
-## Vision
+### 🏛️ Alignment with NullShot Objectives
+This project directly addresses the judging criteria to maximize impact:
 
-We're extending [Cloudflare's vision for AI Agents](https://blog.cloudflare.com/making-cloudflare-the-best-platform-for-ai-agents) with a focus on web3 and MCPs as plugins:
+#### Objective A: Raising Awareness of NullShot Agent & MCP
+HUNT demonstrates the power of the **Model Context Protocol (MCP)** by moving beyond simple text generation. We utilize MCP to bridge the gap between the Large Language Model (LLM) and on-chain state.
+- **MCP Implementation**: We built a custom MCP server that exposes Hedera blockchain tools (`scan_contract`, `estimate_gas`, `submit_proposal`) as executable functions to the NullShot Agent.
+- **Framework Utility**: HUNT proves that the NullShot Framework can orchestrate complex, multi-step workflows—from code analysis (reading) to transaction execution (writing)—without human hand-holding.
 
-- 🤝 AI Agents as teammates/organizations generating revenue and performing advanced operations
-- 💰 Cost-effective shared hosting options
-- 🔒 Secure sensitive assets (trading agents, treasuries, etc.)
-- 📈 Self-improving agents based on collective usage
-- 💸 Drive MCP usage revenue to open source contributors
-- 💼 Monetization avenues for closed-source MCP use cases
-- ⚙️ Seamless configuration options
-- 🚀 Quick iteration on ideas locally and in-cloud
-- 🔓 No vendor lock-in, self-hosting and personal account options
+#### Objective B: Innovation in Decentralized AI & Web3 Workflows
+Most current AI agents are passive observers. HUNT is an **active participant** in the economy.
+- **The "Library of Cures"**: Unlike other AI dev tools that hallucinate (and often break) code, HUNT relies on a deterministic library of pre-verified, audited patches (e.g., standard ReentrancyGuards). The AI identifies the problem, but the solution is cryptographically verified and safe.
+- **Autonomous Negotiation**: HUNT innovates on the workflow by treating security as a market. It doesn't just patch; it negotiates a bounty for its services on-chain, creating a sustainable economic model for decentralized security.
 
-## Project Status
-
-This project is in pre-alpha and actively evolving. Current focus areas:
-
-### Ready for Use
-
-- ✅ Core MCP Framework
-- ✅ Multi Session & Authentication Patterns
-- ✅ Official MCP WebSocket Support and HTTP Streaming Support
-- ✅ Agent Framework (AI SDK)
-- ✅ Seamless MCP Plugins (mcp.json) for Agents
-- ✅ Agent MCP Dependency Management
-- ✅ MCP Webhook / External Service Support
-- ✅ Playground UI for LLMs + MCPs
-
-### In Development
-
-- ☁️ Cloudflare Service Examples (KV, D1, DO state, Analytics, Workflows, Schema Migrations)
-- 🤖 LangChain and Agent SDK examples coming soon
-- 📄 Cloudflare Pages (SSE / Fullstack) Examples
-- 🔑 Authentication (OAuth, JWT)
-
-## Quick Start
-
-Get started with the Null Shot CLI to create MCP servers and AI agents:
-
-### Install the CLI
-
-```bash
-npm install -g @nullshot/cli
-```
-
-### Create a new MCP server
-
-```bash
-nullshot create mcp
-```
-
-### Create a new Agent
-
-```bash
-nullshot create agent
-```
-
-### Initialize MCP configuration in existing project
-
-```bash
-nullshot init
-```
-
-### Install MCP dependencies
-
-```bash
-nullshot install
-```
-
-### Run in development mode
-
-```bash
-nullshot dev
-```
-
-## 🤖 AI Provider Support
-
-This framework supports 6 major AI providers with dynamic model fetching and official SDK integration:
-
-### Supported Providers
-
-| Provider        | Latest Models                                    | SDK                   | Dynamic | API Key    |
-|:----------------|:-------------------------------------------------|:----------------------|:--------|:-----------|
-| **OpenAI**      | GPT-4o, GPT-4o-mini, GPT-3.5-turbo             | `@ai-sdk/openai`     | ✅      | ✅         |
-| **Anthropic**   | Claude Opus 4.1, Claude Sonnet 4, Claude 3.7   | `@ai-sdk/anthropic`  | ✅      | ✅         |
-| **DeepSeek**    | DeepSeek-Chat, DeepSeek-Coder                   | `@ai-sdk/deepseek`   | ✅      | ✅         |
-| **Workers AI**  | Llama 3.1/3.2, Gemma 2, Mistral 7B (~49 models) | `workers-ai-provider` | ✅      | Cloudflare |
-| **Gemini**      | Gemini 1.5 Pro Latest, Gemini 1.5 Flash Latest | `@ai-sdk/google`     | ✅      | ✅         |
-| **Grok**        | Grok-4, Grok-3, Grok-3-mini, Grok-2-1212       | `@ai-sdk/xai`        | ✅      | ✅         |
-
-### Key Features
-
-- **🔄 Dynamic Model Fetching**: Real-time model lists from provider APIs with intelligent fallbacks
-- **🎯 Official SDK Integration**: Uses official AI SDK providers for consistent, reliable integration
-- **💾 Smart Caching**: Model lists cached for 30 minutes with API key validation
-- **🔧 Provider-Aware UI**: Auto-loading saved API keys and intelligent model selection
-- **📡 Streaming Support**: Real-time responses across all providers
-- **⚡ Fallback Handling**: Graceful degradation when APIs are unavailable
-
-### Implementation Examples
-
-- **Next.js Web App**: [`examples/playground-showcase`](examples/playground-showcase) - Full-featured chat interface
-- **Cloudflare Workers Agent**: [`examples/simple-prompt-agent`](examples/simple-prompt-agent) - Server-side AI agent
-- **React Components**: [`packages/playground`](packages/playground) - Reusable UI components
-
-## Documentation
-
-Comprehensive documentation is available at [Null Shot Docs](https://nullshot.ai/docs):
-
-- **[Project Overview](https://nullshot.ai/docs)** - Get started with Null Shot
-- **[Agent Framework - Getting Started](https://nullshot.ai/en/docs/developers/agents-framework/overview)** - Build AI agents with Cloudflare Workers
-- **[MCP Framework Overview](https://nullshot.ai/en/docs/developers/mcp-framework/overview)** - Model Context Protocol implementation
-- **[Platform Overview](https://nullshot.ai/en/docs/developers/platform/overview)** - Understanding the platform architecture
-- **[Common Services](https://nullshot.ai/en/docs/developers/services/overview)** - Cloudflare services integration
-- **[Playground](https://nullshot.ai/en/docs/developers/playground)** - Interactive development environment
-
-## Release Process
-
-This repository uses an automated release workflow following semantic versioning:
-
-1. **Pull Request Testing** - When you create a PR, it automatically runs tests and a semantic-release dry run
-2. **Automated Publishing** - When merged to main, changed packages are automatically published to npm
-3. **Versioning** - Package versions are determined by [Conventional Commits](https://www.conventionalcommits.org/) standards
-
-For detailed information about our release process, see [.github/RELEASE_PROCESS.md](.github/RELEASE_PROCESS.md).
-
-## Contributing
-
-We welcome contributions! Our vision is to create a collaborative ecosystem where AI and human developers work together. Soon, we'll have an AI agent to audit and govern contributions based on our shared vision.
-
-If you're interested in contributing, please:
-
-1. Join our [Discord community](https://discord.gg/acwpp6zWEc)
-2. Watch this repository for updates
-3. Star the project if you find it interesting
-
-## License
-
-MIT License - see the [LICENSE](LICENSE) file for details.
+#### Objective C: Engaging Blockchain Ecosystems (Hedera)
+We chose **Hedera** specifically to solve the "Race Condition" problem in autonomous security.
+- **Fair Ordering**: On other chains, if an agent tries to patch a vulnerability, a hacker can front-run the transaction. Hedera’s Hashgraph consensus ensures **Fair Ordering**, meaning if HUNT submits the patch first, it is processed first.
+- **Low-Latency Defense**: Hedera’s speed allows HUNT to operate in the brief window between a vulnerability being deployed and it being discovered by attackers.
 
 ---
 
-<div align="center">
-  <i>Built with ❤️ by the Xava DAO Community</i>
-</div>
+## 🏗️ Architecture & Groundwork
+Our current prototype operates on a 4-stage loop:
+
+1. **The Hunter (Diagnosis)**: The NullShot agent scans bytecode using Regex and AST parsing to identify specific vulnerability signatures.
+2. **The Broker (Negotiation)**: The agent proposes a fix to the target protocol, requesting a fee (in HBAR or USDC).
+3. **The Surgeon (Execution)**: Upon approval, the agent retrieves the correct patch from our **Library of Cures** and executes a **ContractUpdate** or proxy upgrade via the Hedera network.
+   - *Innovation*: Uses an **Atomic Batch Executor** to bundle payment and multiple upgrades into a single transaction.
+4. **The Brain (Learning)**: Successful patches are recorded to **HCS (Hedera Consensus Service)**, updating the agent's context for future scans.
+
+---
+
+## 🚀 Installation & Setup Guide
+
+### Prerequisites
+- Node.js v22+
+- pnpm
+
+### Environment Setup
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/nullshot/hunt.git
+   cd hunt
+   ```
+
+2. Install dependencies:
+   ```bash
+   pnpm install
+   ```
+
+3. Configure Environment:
+   Create a `.env.local` file in `packages/playground`:
+   ```env
+   NEXT_PUBLIC_THIRDWEB_CLIENT_ID="your_thirdweb_client_id"
+   NEXT_PUBLIC_HEDERA_ACCOUNT_ID="your_testnet_account_id"
+   NEXT_PUBLIC_HEDERA_PRIVATE_KEY="your_testnet_private_key"
+   ```
+
+### Running the App
+1. Start the development server:
+   ```bash
+   pnpm dev
+   ```
+
+2. Open `http://localhost:3000` (or the port specified in terminal).
+3. Connect your Wallet (Hedera Testnet via Metamask/Thirdweb).
+4. Click "Initialize Hunt" to start the autonomous loop.
+
+---
+
+## 🔮 Future Developments & Roadmap
+We are building HUNT to be the future standard of smart contract security.
+
+### The HUNT Training Module (Simulation)
+We are developing a "Sandbox Dojo" for AI agents. Before a HUNT agent is allowed to touch mainnet assets, it must graduate from this training module.
+- **Mechanism**: Agents run thousands of simulations on a private Hedera shadow fork, attempting to patch deliberate vulnerabilities.
+- **Goal**: This ensures 99.9% reliability and drastically reduces the risk of an agent accidentally locking a protocol during a rescue mission.
+
+### The Open "Library of Cures"
+We plan to decentralize the library itself. Innovative developers can submit new "Cures" (patches) for emerging threats.
+- **Incentive**: If HUNT uses a developer's specific Cure to save a protocol, that developer earns a micro-royalty from the bounty. This crowdsources security expertise globally.
+
+### Cross-Chain Expansion
+While Hedera is our home base due to its security features, future versions of HUNT will utilize **Chainlink CCIP** to monitor and patch contracts on other EVM chains (Ethereum, Polygon) from a single, secure Hedera control center.
+
+---
+
+## 🏁 Conclusion
+HUNT is not just a tool; it is **Active Defense Infrastructure**. By combining the NullShot Framework's agentic capabilities with Hedera's speed and security, we have laid the groundwork for a self-healing Web3 ecosystem.
+
+**We are moving from "Code is Law" to "Code is Immune."**

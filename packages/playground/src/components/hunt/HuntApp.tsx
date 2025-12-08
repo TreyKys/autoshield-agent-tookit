@@ -47,6 +47,7 @@ function HuntAppInner() {
   const [chatSessionId, setChatSessionId] = useState<string | null>(null);
   const [modelConfig, setModelConfig] = useState<any>(null);
   const [discoveredTargets, setDiscoveredTargets] = useState<any[]>([]);
+  const [brokerData, setBrokerData] = useState<any>(null);
 
   // Initialize MCP/Chat setup
   useEffect(() => {
@@ -71,42 +72,15 @@ function HuntAppInner() {
         // Logic to transition states based on message content
         // For now, we'll replicate the narrative flow
         console.log("Agent finished:", message);
-
-        const content = message.content.toLowerCase();
-
-        // If we were in Hunter mode and agent finished scanning
-        if (act === 'hunter') {
-             // Optional: parse JSON if the agent returns structured data
-             // setVulnerabilities(...)
-
-             // Transition to Broker after a delay for effect
-             setTimeout(() => setAct('broker'), 2000);
-        }
-
-        // If we were in Broker mode and agent finished proposal
-        if (act === 'broker') {
-            // Wait for user to accept -> Surgeon
-            setTimeout(() => setAct('surgeon'), 2000);
-        }
     }
   });
 
   const handleActivate = async () => {
-    // if (!account) {
-    //    alert("Please connect wallet first");
-    //    return;
-    // }
-
-    // Start Sequence
     setAct('hunter');
 
-    // Trigger Agent
+    // Trigger Agent context
     try {
-        // Wait briefly for effect
         setTimeout(async () => {
-             // We actually skip the 'Scan' phase of the Agent because the frontend already did it.
-             // We tell the agent to proceed to Broker/Surgeon logic directly or contextually.
-             // The prompt triggers the agent's persona.
              await append({
                 role: 'user',
                 content: "Auto-Shield, secure the network. Targets identified. Proceed to patch."
@@ -119,35 +93,28 @@ function HuntAppInner() {
     }
   };
 
-  // Handlers for manual transitions if needed by "Next" buttons in demo flow
-  // (In autonomous mode, the Agent drives it, but for the demo acts, we might want user clicks)
-
-  const handleScanComplete = () => {
+  const handleScanComplete = (targets: any[]) => {
+      setDiscoveredTargets(targets);
       setAct('broker');
   };
 
-  const handleNegotiationComplete = () => {
-      // This is the "ACTIVATE" moment
+  const handleNegotiationComplete = (data: any) => {
+      setBrokerData(data); // Store payment data
       setAct('surgeon');
-      // Trigger the agent if not already triggered, or trigger specific phase
-      append({
-          role: 'user',
-          content: "Negotiation complete. Authorized to execute upgrades."
-      });
   };
 
   const handleSurgeryComplete = (results: any[]) => {
     setTxResults(results);
-    // Transition to Brain
     setTimeout(() => {
         setAct('brain');
     }, 1000);
   };
 
-  const handleReset = () => {
+  const handleRestart = () => {
     setAct('inactive');
     setTxResults([]);
     setDiscoveredTargets([]);
+    setBrokerData(null);
   };
 
   // Extract data from messages for components
@@ -205,19 +172,8 @@ function HuntAppInner() {
                               className="w-full h-full relative"
                           >
                               <Hunter
-                                  agentMessage={lastAssistantMessage}
-                                  onTargetsFound={setDiscoveredTargets}
+                                  onComplete={handleScanComplete}
                               />
-
-                              {/* Manual Advance Button for Demo Control */}
-                              <div className="absolute bottom-8 right-8">
-                                  <button
-                                      onClick={handleScanComplete}
-                                      className="px-6 py-2 bg-hunter/20 border border-hunter text-hunter hover:bg-hunter/40 transition-all rounded uppercase text-sm tracking-widest font-bold"
-                                  >
-                                      Proceed to Negotiation &rarr;
-                                  </button>
-                              </div>
                           </motion.div>
                       )}
 
@@ -229,17 +185,10 @@ function HuntAppInner() {
                               exit={{ opacity: 0, scale: 1.1 }}
                               className="w-full h-full relative"
                           >
-                              <Broker agentMessage={lastAssistantMessage} />
-
-                              {/* "ACTIVATE" Button - The key trigger point */}
-                              <div className="absolute bottom-8 right-8">
-                                  <button
-                                      onClick={handleNegotiationComplete}
-                                      className="px-8 py-3 bg-indigo-600 hover:bg-indigo-500 text-white shadow-[0_0_20px_rgba(79,70,229,0.5)] transition-all rounded uppercase text-sm tracking-[0.2em] font-bold border border-white/10"
-                                  >
-                                      ACTIVATE AUTO-SHIELD
-                                  </button>
-                              </div>
+                              <Broker
+                                onComplete={handleNegotiationComplete}
+                                targets={discoveredTargets}
+                              />
                           </motion.div>
                       )}
 
@@ -253,7 +202,7 @@ function HuntAppInner() {
                           >
                               <Surgeon
                                   onComplete={handleSurgeryComplete}
-                                  targets={discoveredTargets}
+                                  data={brokerData} // Pass the authorized payment data
                               />
                           </motion.div>
                       )}
@@ -266,7 +215,7 @@ function HuntAppInner() {
                               exit={{ opacity: 0, scale: 1.1 }}
                               className="w-full h-full"
                           >
-                              <Brain results={txResults} onReset={handleReset} />
+                              <Brain results={txResults} onRestart={handleRestart} />
                           </motion.div>
                       )}
                     </>

@@ -1,88 +1,169 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { HandCoins, TrendingUp, ShieldCheck, Database } from 'lucide-react';
-import curesData from '../../data/cures';
+import { Scale, FileSignature, Coins, ArrowRight, ShieldCheck, Zap } from 'lucide-react';
+import { Button } from './ui';
+
+// Pricing Menu (Dynamic in a real app, hardcoded here as requested)
+const PRICING = {
+    upgrade: 50, // HBAR
+    pause: 10,   // HBAR
+    serviceFee: 5 // HBAR (Agent Fee)
+};
+
+// Mock Gas Estimation (In HBAR)
+const GAS_ESTIMATES = {
+    upgrade: 2.5,
+    pause: 0.5,
+    deploySafe: 5.0
+};
 
 interface BrokerProps {
-  agentMessage?: string;
+  onComplete: (data: any) => void;
+  targets: any[];
 }
 
-export function Broker({ agentMessage }: BrokerProps) {
-  const [fee, setFee] = useState(0.01);
-  const [cures, setCures] = useState<any[]>([]);
+export function Broker({ onComplete, targets }: BrokerProps) {
+  const [negotiating, setNegotiating] = useState(true);
+  const [totalCost, setTotalCost] = useState(0);
+  const [breakdown, setBreakdown] = useState<any[]>([]);
+  const [gasTotal, setGasTotal] = useState(0);
 
   useEffect(() => {
-    // Simulate negotiating/settling
-    const interval = setInterval(() => {
-      setFee(prev => {
-        if (prev >= 2.5) {
-          clearInterval(interval);
-          return 2.5;
-        }
-        return prev + 0.15;
+    // Simulate negotiation/calculation delay
+    const timer = setTimeout(() => {
+        calculateQuote();
+        setNegotiating(false);
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, [targets]);
+
+  const calculateQuote = () => {
+      let cost = 0;
+      let gas = 0;
+      const items = [];
+
+      // 1. One-time Setup (Deploy Safe Impl) - applied once if upgrades exist
+      const hasUpgrades = targets.some(t => t.action === 'upgrade');
+      if (hasUpgrades) {
+          gas += GAS_ESTIMATES.deploySafe;
+          // Setup is free/included in service fee for this demo?
+          // Or let's just charge gas.
+      }
+
+      targets.forEach(t => {
+          const price = t.action === 'upgrade' ? PRICING.upgrade : PRICING.pause;
+          const gasEst = t.action === 'upgrade' ? GAS_ESTIMATES.upgrade : GAS_ESTIMATES.pause;
+
+          cost += price;
+          gas += gasEst;
+
+          items.push({
+              id: t.id,
+              action: t.action,
+              price,
+              gas: gasEst
+          });
       });
-    }, 100);
 
-    // Load cures
-    if (curesData && curesData.cures) {
-        setCures(Object.values(curesData.cures));
-    }
+      // Add Agent Service Fee
+      cost += PRICING.serviceFee;
 
-    return () => clearInterval(interval);
-  }, []);
+      setGasTotal(gas);
+      setTotalCost(cost);
+      setBreakdown(items);
+  };
+
+  const finalTotal = totalCost + gasTotal;
 
   return (
-    <div className="flex flex-col items-center justify-center h-full text-broker w-full max-w-4xl mx-auto">
-      <motion.div
-        initial={{ y: 20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        className="mb-6 relative"
-      >
-        <div className="absolute inset-0 bg-broker/20 blur-2xl rounded-full" />
-        <HandCoins className="w-16 h-16 relative z-10" />
-      </motion.div>
-
-      <h2 className="text-2xl font-display mb-2 uppercase tracking-widest">Consulting Library of Cures...</h2>
-      <p className="text-broker/60 font-mono text-sm mb-8">Identifying Patch Vectors from Knowledge Base</p>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full px-8">
-          {/* Cures List */}
-          <div className="glass-panel rounded-xl border-broker/30 p-4 max-h-[300px] overflow-y-auto">
-             <div className="flex items-center gap-2 mb-4 text-white/80 border-b border-white/10 pb-2">
-                 <Database className="w-4 h-4 text-broker" />
-                 <span className="font-bold text-xs uppercase">Proposed Cures</span>
-             </div>
-             <div className="space-y-3">
-                 {cures.slice(0, 3).map((cure, idx) => (
-                     <motion.div
-                        key={idx}
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: idx * 0.2 }}
-                        className="flex items-center gap-3 text-xs"
-                     >
-                         <ShieldCheck className="w-3 h-3 text-emerald-400" />
-                         <span className="text-white/70 font-mono">{cure.name}</span>
-                     </motion.div>
-                 ))}
-                 <div className="text-xs text-center text-white/30 italic pt-2">+ 2 more optimized patches</div>
-             </div>
-          </div>
-
-          {/* Gas Estimate */}
-          <div className="glass-panel rounded-xl border-broker/30 p-6 flex flex-col justify-center items-center">
-            <div className="flex items-center justify-between gap-8 mb-2 w-full">
-            <span className="text-white/60 text-xs uppercase tracking-wider">Total Upgrade Cost</span>
-            <TrendingUp className="w-4 h-4 text-broker" />
-            </div>
-            <div className="text-5xl font-mono font-bold text-white flex items-baseline gap-2">
-            {fee.toFixed(2)} <span className="text-lg text-broker font-sans">HBAR</span>
-            </div>
-            <div className="mt-4 text-[10px] text-emerald-400 bg-emerald-900/20 px-2 py-1 rounded border border-emerald-900/50">
-                Authorized by Consensus
-            </div>
-          </div>
+    <div className="flex flex-col items-center justify-center h-full text-broker">
+      <div className="mb-6 relative">
+        <div className="absolute inset-0 bg-broker/20 blur-xl rounded-full" />
+        <Scale className="w-20 h-20 relative z-10" />
       </div>
+
+      <h2 className="text-3xl font-display mb-2">
+          {negotiating ? "Negotiating Bounty..." : "Proposal Ready"}
+      </h2>
+
+      {negotiating ? (
+        <div className="flex flex-col items-center space-y-4 w-full max-w-md mt-8">
+             <div className="flex items-center gap-2 text-white/50 text-sm font-mono">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Analyzing complexity...
+             </div>
+             {/* Fake streaming text */}
+             <div className="w-full h-32 bg-black/20 rounded p-4 font-mono text-xs text-broker/60 overflow-hidden relative">
+                <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/80 pointer-events-none" />
+                <p>{`> target_count: ${targets.length}`}</p>
+                <p>{`> estimating_gas_overhead...`}</p>
+                <p>{`> checking_treasury_rates...`}</p>
+                <p>{`> applying_bulk_discount...`}</p>
+             </div>
+        </div>
+      ) : (
+        <div className="w-full max-w-md mt-6 space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+
+            {/* Invoice Card */}
+            <div className="glass-panel border-broker/30 p-6 rounded-lg relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-2 bg-broker/10 rounded-bl text-xs font-mono text-broker">
+                    INVOICE #HUNT-{Math.floor(Math.random() * 1000)}
+                </div>
+
+                <div className="space-y-4 mt-2">
+                    <div className="flex justify-between items-center text-sm border-b border-white/10 pb-2">
+                        <span className="text-white/60">Vulnerability Patches ({targets.length})</span>
+                        <span className="text-white font-mono">{totalCost - PRICING.serviceFee} ℏ</span>
+                    </div>
+
+                    <div className="flex justify-between items-center text-sm border-b border-white/10 pb-2">
+                        <span className="text-white/60">Network Gas (Est.)</span>
+                        <span className="text-white/80 font-mono italic">{gasTotal} ℏ</span>
+                    </div>
+
+                    <div className="flex justify-between items-center text-sm border-b border-white/10 pb-2">
+                        <span className="text-white/60">Agent Service Fee</span>
+                        <span className="text-white font-mono">{PRICING.serviceFee} ℏ</span>
+                    </div>
+
+                    <div className="flex justify-between items-center pt-2">
+                        <span className="text-broker font-bold uppercase tracking-wider">Total</span>
+                        <span className="text-3xl font-display text-broker">{finalTotal.toFixed(2)} ℏ</span>
+                    </div>
+                </div>
+            </div>
+
+            <div className="flex gap-4">
+                <Button
+                    variant="outline"
+                    className="flex-1 border-white/20 hover:bg-white/5 text-white/60"
+                    onClick={() => { /* Cancel? */ }}
+                >
+                    Reject
+                </Button>
+                <Button
+                    className="flex-2 bg-broker hover:bg-broker/80 text-black font-bold flex items-center justify-center gap-2"
+                    onClick={() => onComplete({
+                        finalTotal,
+                        breakdown,
+                        gasTotal,
+                        targets // Pass targets through
+                    })}
+                >
+                    <FileSignature className="w-4 h-4" />
+                    Sign & Authorize
+                </Button>
+            </div>
+
+            <p className="text-center text-xs text-white/30 max-w-xs mx-auto">
+                By signing, you authorize the NullShot Agent to execute the specified upgrades on your behalf.
+            </p>
+        </div>
+      )}
     </div>
   );
+}
+
+function Loader2({ className }: { className?: string }) {
+    return <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56" /></svg>;
 }

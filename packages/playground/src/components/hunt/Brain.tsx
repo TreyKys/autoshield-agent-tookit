@@ -1,87 +1,151 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { CheckCircle, Lock, ExternalLink, ShieldCheck, PauseCircle, ArrowUpCircle } from 'lucide-react';
+import { Brain as BrainIcon, Terminal, CheckCircle, Shield, History, Hash, Activity } from 'lucide-react';
 import { Button } from './ui';
 
+// HCS Topic ID from env or fallback
+const HCS_TOPIC_ID = process.env.NEXT_PUBLIC_HCS_TOPIC_ID || "0.0.5369661";
+const MIRROR_NODE_API = "https://testnet.mirrornode.hedera.com/api/v1";
+
 interface BrainProps {
+  onRestart: () => void;
   results: any[];
-  onReset: () => void;
 }
 
-export function Brain({ results, onReset }: BrainProps) {
-  const upgradedCount = results.filter(r => r.type === 'upgrade' && r.success).length;
-  const pausedCount = results.filter(r => r.type === 'pause' && r.success).length;
+export function Brain({ onRestart, results }: BrainProps) {
+  const [logs, setLogs] = useState<any[]>([]);
+  const [loadingLogs, setLoadingLogs] = useState(true);
+
+  // Fetch logs from HCS Topic
+  useEffect(() => {
+    const fetchLogs = async () => {
+        try {
+            const res = await fetch(`${MIRROR_NODE_API}/topics/${HCS_TOPIC_ID}/messages?limit=20&order=desc`);
+            if (!res.ok) return;
+            const data: any = await res.json();
+
+            // Parse messages (base64 decode)
+            const parsedLogs = data.messages.map((msg: any) => {
+                try {
+                    const decoded = atob(msg.message);
+                    return JSON.parse(decoded);
+                } catch (e) {
+                    return { action: "RAW_MESSAGE", details: msg.message };
+                }
+            }).filter((l: any) => l.timestamp); // Basic filter
+
+            setLogs(parsedLogs);
+            setLoadingLogs(false);
+        } catch (e) {
+            console.error("Failed to fetch HCS logs:", e);
+            setLoadingLogs(false);
+        }
+    };
+
+    fetchLogs();
+    const interval = setInterval(fetchLogs, 5000); // Poll every 5s
+    return () => clearInterval(interval);
+  }, []);
+
+  const successCount = results.filter(r => r.success || r.status === 'success').length;
 
   return (
-    <div className="flex flex-col items-center justify-center h-full text-brain w-full max-w-4xl mx-auto">
-      <motion.div
-        initial={{ scale: 0.5, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ type: "spring" }}
-        className="mb-8 relative"
-      >
-        <div className="absolute inset-0 bg-brain/20 blur-2xl rounded-full" />
-        <ShieldCheck className="w-24 h-24 relative z-10" />
-      </motion.div>
+    <div className="flex flex-col h-full text-brain overflow-hidden">
 
-      <h2 className="text-3xl font-display mb-2">System Secured.</h2>
-
-      {/* Dynamic Summary Message */}
-      <p className="text-white/70 mb-8 text-center max-w-lg">
-          <span className="text-emerald-400 font-bold">{pausedCount}</span> contract{pausedCount !== 1 ? 's' : ''} wasn't upgradeable so it was paused instead. <br/>
-          <span className="text-emerald-400 font-bold">{upgradedCount}</span> contract{upgradedCount !== 1 ? 's' : ''} successfully upgraded.
-      </p>
-
-      <motion.div
-        initial={{ y: 50, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.2 }}
-        className="w-full grid grid-cols-1 gap-4 max-h-[400px] overflow-y-auto px-4 custom-scrollbar"
-      >
-        {results.map((res, idx) => (
-            <div key={idx} className="glass-panel p-4 rounded-xl border-brain/30 flex items-center justify-between group hover:bg-white/5 transition-colors">
-                <div className="flex items-center gap-4">
-                    <div className={`p-2 rounded-lg ${res.type === 'pause' ? 'bg-amber-500/20 text-amber-400' : 'bg-emerald-500/20 text-emerald-400'}`}>
-                        {res.type === 'pause' ? <PauseCircle className="w-5 h-5" /> : <ArrowUpCircle className="w-5 h-5" />}
-                    </div>
-                    <div>
-                        <div className="font-bold text-white text-sm">{res.name}</div>
-                        <div className="text-xs text-white/40 font-mono">{res.address}</div>
-                    </div>
-                </div>
-
-                <div className="flex items-center gap-4">
-                    <div className="text-right hidden md:block">
-                        <div className="text-xs text-white/50 uppercase tracking-widest">{res.type}d</div>
-                        <div className="text-xs font-mono text-brain truncate w-24">{res.txHash ? `${res.txHash.substring(0,6)}...${res.txHash.substring(res.txHash.length-4)}` : 'Failed'}</div>
-                    </div>
-
-                    {res.txHash && (
-                        <a
-                        href={`https://hashscan.io/testnet/transaction/${res.txHash}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="p-2 text-white/30 hover:text-white transition-colors"
-                        title="View on HashScan"
-                        >
-                            <ExternalLink className="w-4 h-4" />
-                        </a>
-                    )}
-                </div>
+      {/* Header */}
+      <div className="flex items-center gap-4 mb-6 p-4 border-b border-white/10">
+         <div className="p-3 bg-brain/10 rounded-full">
+            <BrainIcon className="w-8 h-8" />
+         </div>
+         <div>
+            <h2 className="text-2xl font-display">Neural Memory</h2>
+            <div className="text-xs text-white/50 font-mono">
+                Topic ID: {HCS_TOPIC_ID} • Consensus Verified
             </div>
-        ))}
-      </motion.div>
+         </div>
+      </div>
 
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 1 }}
-        className="mt-8"
-      >
-          <Button onClick={onReset} className="bg-white/5 border-white/10 text-white/50 hover:text-white">
-              Reset System
-          </Button>
-      </motion.div>
+      <div className="flex-1 flex gap-6 overflow-hidden p-4">
+
+          {/* Results Summary */}
+          <div className="w-1/3 space-y-4">
+              <div className="glass-panel border-brain/30 p-6 rounded-lg bg-brain/5">
+                  <div className="text-sm text-white/50 uppercase tracking-wider mb-1">Mission Status</div>
+                  <div className="text-4xl font-display text-white mb-4">
+                      {successCount}/{results.length} Secured
+                  </div>
+
+                  <div className="space-y-2">
+                      {results.map((r, i) => (
+                          <div key={i} className="flex items-center justify-between text-xs p-2 bg-black/20 rounded border border-white/5">
+                              <span className="font-mono text-white/70 truncate w-32">{r.name || r.address}</span>
+                              <div className="flex items-center gap-1">
+                                  {r.status === 'success' || r.success ? (
+                                      <span className="text-brain flex items-center gap-1">
+                                          <CheckCircle className="w-3 h-3" /> PATCHED
+                                      </span>
+                                  ) : (
+                                      <span className="text-red-400">FAILED</span>
+                                  )}
+                              </div>
+                          </div>
+                      ))}
+                  </div>
+              </div>
+
+              <div className="p-4 bg-brain/10 border border-brain/20 rounded text-center">
+                  <p className="text-sm text-white/70 mb-4">
+                      The Agent has updated its global immunity database.
+                  </p>
+                  <Button onClick={onRestart} className="w-full bg-brain/20 hover:bg-brain/30 text-brain border border-brain/50">
+                      Start New Cycle
+                  </Button>
+              </div>
+          </div>
+
+          {/* HCS Live Logs */}
+          <div className="flex-1 glass-panel border-white/10 rounded-lg flex flex-col overflow-hidden bg-black/40">
+              <div className="p-3 bg-black/40 border-b border-white/5 flex items-center justify-between">
+                  <span className="text-xs font-mono text-white/50 flex items-center gap-2">
+                      <Terminal className="w-4 h-4" />
+                      LIVE HCS FEED
+                  </span>
+                  <span className="flex items-center gap-1 text-[10px] text-brain/70 bg-brain/10 px-2 py-1 rounded-full">
+                      <Activity className="w-3 h-3 animate-pulse" />
+                      SYNCED
+                  </span>
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-4 font-mono text-xs space-y-2">
+                  {loadingLogs ? (
+                      <div className="text-center text-white/30 italic py-10">Syncing with Hedera Consensus Service...</div>
+                  ) : logs.length === 0 ? (
+                      <div className="text-center text-white/30 italic py-10">No recent activity recorded on chain.</div>
+                  ) : (
+                      logs.map((log, i) => (
+                          <div key={i} className="flex gap-3 animate-in fade-in slide-in-from-left-2 duration-300">
+                              <span className="text-white/30 shrink-0 w-20">{log.timestamp?.split('T')[1].split('.')[0]}</span>
+                              <div className="flex-1">
+                                  <span className={`uppercase font-bold mr-2 ${
+                                      log.level === 'error' ? 'text-red-400' :
+                                      log.level === 'success' ? 'text-brain' : 'text-blue-400'
+                                  }`}>
+                                      [{log.stage}]
+                                  </span>
+                                  <span className="text-white/80">{log.action}</span>
+                                  {log.details && (
+                                      <div className="mt-1 ml-2 text-white/40 pl-2 border-l border-white/10">
+                                          {JSON.stringify(log.details)}
+                                      </div>
+                                  )}
+                              </div>
+                          </div>
+                      ))
+                  )}
+              </div>
+          </div>
+
+      </div>
     </div>
   );
 }

@@ -26,7 +26,7 @@ const chain = defineChain({
   testnet: true,
 });
 
-const TREASURY_ACCOUNT = "0.0.7160195";
+const TREASURY_ACCOUNT = "0xc67b91f2c954ca8dfb611bc53bab18237d7cab8d"; // EVM address for 0.0.7160195
 
 interface SurgeonProps {
   onComplete: (txHash: string, result: any) => void;

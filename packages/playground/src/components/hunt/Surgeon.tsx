@@ -2,13 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Zap, AlertOctagon, Activity, CheckCircle, Clock } from 'lucide-react';
 import { useActiveAccount, useSendTransaction } from "thirdweb/react";
-import { getContract, prepareContractCall, defineChain, createThirdwebClient, prepareTransaction, toWei } from "thirdweb";
+import { getContract, prepareContractCall, defineChain, createThirdwebClient } from "thirdweb";
 import { deployContract } from "thirdweb/deploys";
+import { VulnerableBoxArtifact } from './contracts/VulnerableBox';
+import { SafeBoxArtifact } from './contracts/SafeBox';
+import { PausableBoxArtifact } from './contracts/PausableBox';
 import { Button } from './ui';
 
 // Client initialization
 const client = createThirdwebClient({
-  clientId: process.env.NEXT_PUBLIC_THIRDWEB_CLIENT_ID || "c06411514757049826317b6a782b137a",
+  clientId: process.env.NEXT_PUBLIC_THIRDWEB_CLIENT_ID || "c06411514757049826317b6a782b137a", // Should come from env
 });
 
 // Hedera Testnet
@@ -20,95 +23,118 @@ const chain = defineChain({
   testnet: true,
 });
 
-const TREASURY_ACCOUNT = process.env.NEXT_PUBLIC_TREASURY_ACCOUNT_ID;
-
 interface SurgeonProps {
   onComplete: (results: any[]) => void;
-  data: any; // Contains targets, finalTotal, etc.
+  targets: any[];
 }
 
-export function Surgeon({ onComplete, data }: SurgeonProps) {
+export function Surgeon({ onComplete, targets }: SurgeonProps) {
   const account = useActiveAccount();
   const { mutateAsync: sendTx } = useSendTransaction();
-  const [status, setStatus] = useState<'idle' | 'paying' | 'processing' | 'success'>('idle');
-  const [progressText, setProgressText] = useState("Waiting for authorization...");
+  const [status, setStatus] = useState<'idle' | 'processing' | 'success'>('idle');
+  const [currentIndex, setCurrentIndex] = useState(0);
   const [results, setResults] = useState<any[]>([]);
+  const [currentAction, setCurrentAction] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
 
-  const { targets, finalTotal } = data;
+  // Auto-execute if account is connected
+  useEffect(() => {
+    if (account && status === 'idle' && targets.length > 0) {
+      processQueue();
+    }
+  }, [account, status, targets]);
 
-  const handleAuthorize = async () => {
-      if (!account || !TREASURY_ACCOUNT) {
-          setError("Wallet not connected or Treasury configuration missing.");
-          return;
-      }
+  const processQueue = async () => {
+      setStatus('processing');
+      const finalResults = [];
 
-      setStatus('paying');
-      setProgressText("Processing Payment...");
+      for (let i = 0; i < targets.length; i++) {
+          setCurrentIndex(i);
+          const target = targets[i];
+          const action = (target as any)?.action || 'upgrade';
+          setCurrentAction(`Processing ${target.name} (${action})...`);
 
-      try {
-          // 1. Send Payment (One Big Transaction)
-          // We transfer 'finalTotal' HBAR to the Treasury
-          const transaction = prepareTransaction({
-              to: TREASURY_ACCOUNT,
-              chain,
-              client,
-              value: toWei(finalTotal.toString()), // Convert HBAR to Wei
-          });
-
-          const receipt = await sendTx(transaction);
-          console.log("Payment sent:", receipt.transactionHash);
-
-          setProgressText("Payment confirmed. Agent activating...");
-          setStatus('processing');
-
-          // 2. Trigger Agent Execution (Batch Fix)
-          const response = await fetch('/api/agent/fix', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                  targets,
-                  paymentTxId: receipt.transactionHash
-              })
-          });
-
-          const result: any = await response.json();
-
-          if (!response.ok) {
-              throw new Error(result.error || "Agent execution failed");
+          try {
+              let result;
+              if (action === 'upgrade') {
+                  result = await executeUpgrade(target.address);
+              } else {
+                  result = await executePause(target.address);
+              }
+              finalResults.push({ ...target, ...result, success: true });
+          } catch (err: any) {
+              console.error(`Failed to process ${target.name}:`, err);
+              finalResults.push({ ...target, success: false, error: err.message });
+              // We continue to the next one even if one fails
           }
-
-          setResults(result.results);
-          setStatus('success');
-          setProgressText("All Operations Complete.");
-
-          setTimeout(() => {
-              onComplete(result.results);
-          }, 2000);
-
-      } catch (err: any) {
-          console.error("Surgery failed:", err);
-          setError(err.message || "Operation failed.");
-          setStatus('idle'); // Allow retry?
       }
+
+      setResults(finalResults);
+      setStatus('success');
+      onComplete(finalResults);
   };
 
-  // Auto-start if status is idle? No, user must click button in Broker,
-  // but wait, Broker calls onComplete which mounts Surgeon.
-  // So Surgeon should probably start or show a summary and "Execute" button?
-  // The Broker had "Sign & Authorize".
-  // If the previous step was "Sign", then Surgeon should probably just start executing?
-  // Or Surgeon is the "Execution View".
-  // Let's make Surgeon auto-execute the logic upon mount if passed data?
-  // "Making the user leave the browser all the time to approve transactions seems like very bad UX."
-  // "One big transaction that automatically approves the rest"
-  // So the user clicks "Sign" in Broker -> Transits to Surgeon -> Surgeon prompts wallet immediately.
+  const executeUpgrade = async (targetAddress: string) => {
+    console.log(`Upgrading ${targetAddress}...`);
 
-  useEffect(() => {
-      if (status === 'idle' && account) {
-          handleAuthorize();
-      }
-  }, [status, account]); // Run once
+    // Step 1: Deploy Safe Implementation
+    const safeImplementationAddress = await deployContract({
+        client,
+        chain,
+        account: account!,
+        bytecode: SafeBoxArtifact.bytecode as `0x${string}`,
+        abi: SafeBoxArtifact.abi,
+    });
+
+    // Step 2: Call upgradeTo
+    const targetContract = getContract({
+        client,
+        chain,
+        address: targetAddress,
+        abi: VulnerableBoxArtifact.abi
+    });
+
+    const transaction = prepareContractCall({
+        contract: targetContract,
+        method: "upgradeTo",
+        params: [safeImplementationAddress]
+    });
+
+    const receipt = await sendTx(transaction);
+
+    return {
+        type: 'upgrade',
+        txHash: receipt.transactionHash,
+        newImplementation: safeImplementationAddress
+    };
+  };
+
+  const executePause = async (targetAddress: string) => {
+      console.log(`Pausing ${targetAddress}...`);
+
+      const targetContract = getContract({
+          client,
+          chain,
+          address: targetAddress,
+          abi: PausableBoxArtifact.abi
+      });
+
+      const transaction = prepareContractCall({
+          contract: targetContract,
+          method: "pause",
+          params: []
+      });
+
+      const receipt = await sendTx(transaction);
+
+      return {
+          type: 'pause',
+          txHash: receipt.transactionHash,
+          status: 'PAUSED'
+      };
+  };
+
+  const progressPercentage = ((currentIndex) / (targets.length || 1)) * 100;
 
   return (
     <div className="flex flex-col items-center justify-center h-full text-surgeon">
@@ -122,14 +148,15 @@ export function Surgeon({ onComplete, data }: SurgeonProps) {
       </motion.div>
 
       <h2 className="text-3xl font-display mb-2">
-          {status === 'success' ? "Mission Accomplished" : "Surgical Operation in Progress"}
+          {status === 'success' ? "All Patches Applied." : "Executing Batch Fixes..."}
       </h2>
 
       {/* Progress UI */}
       <div className="mt-8 w-full max-w-md space-y-4">
 
-        <div className="text-center font-mono text-sm text-white/70 h-8">
-            {error ? <span className="text-red-400">{error}</span> : progressText}
+        <div className="flex items-center justify-between text-sm text-white/70">
+            <span>Progress</span>
+            <span>{currentIndex + (status === 'success' ? 0 : 1)} / {targets.length}</span>
         </div>
 
         {/* Progress Bar */}
@@ -137,12 +164,8 @@ export function Surgeon({ onComplete, data }: SurgeonProps) {
            <motion.div
              className="h-full bg-surgeon"
              initial={{ width: 0 }}
-             animate={{
-                 width: status === 'paying' ? '30%' :
-                        status === 'processing' ? '80%' :
-                        status === 'success' ? '100%' : '0%'
-             }}
-             transition={{ duration: 1 }}
+             animate={{ width: `${status === 'success' ? 100 : progressPercentage}%` }}
+             transition={{ duration: 0.5 }}
            />
            {status === 'processing' && (
                 <motion.div
@@ -154,12 +177,23 @@ export function Surgeon({ onComplete, data }: SurgeonProps) {
            )}
         </div>
 
-        {/* Step Indicators */}
-        <div className="flex justify-between text-xs text-white/30 uppercase font-mono mt-2">
-            <span className={status === 'paying' || status === 'processing' || status === 'success' ? 'text-surgeon' : ''}>1. Payment</span>
-            <span className={status === 'processing' || status === 'success' ? 'text-surgeon' : ''}>2. Agent Activation</span>
-            <span className={status === 'success' ? 'text-surgeon' : ''}>3. Patch Verification</span>
+        <div className="text-center font-mono text-xs text-surgeon h-6 mt-2">
+            {status === 'processing' ? currentAction : "Operation Complete"}
         </div>
+
+        {/* Current Target Details */}
+        {status === 'processing' && targets[currentIndex] && (
+             <div className="mt-4 p-4 glass-panel border-surgeon/30 rounded flex items-center justify-between">
+                <div>
+                    <div className="text-xs text-white/50 uppercase">Targeting</div>
+                    <div className="text-white font-bold">{targets[currentIndex].name}</div>
+                </div>
+                <div className="text-right">
+                    <div className="text-xs text-white/50 uppercase">Action</div>
+                    <div className="text-surgeon font-bold uppercase">{targets[currentIndex].action}</div>
+                </div>
+             </div>
+        )}
 
         {/* Wallet Prompt */}
         {!account && (
@@ -171,7 +205,8 @@ export function Surgeon({ onComplete, data }: SurgeonProps) {
         {/* Error State */}
         {error && (
             <div className="mt-4 p-4 bg-red-900/20 border border-red-500/50 rounded text-red-200 text-sm">
-                <Button onClick={() => setStatus('idle')} className="mt-2 w-full bg-red-500/20 hover:bg-red-500/40">Retry Operation</Button>
+                Error: {error}
+                <Button onClick={() => setStatus('idle')} className="mt-2 w-full">Retry</Button>
             </div>
         )}
       </div>

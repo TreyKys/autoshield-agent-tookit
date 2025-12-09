@@ -1,104 +1,48 @@
-// BatchExecutor Artifact
-// Compiled from a simple BatchExecutor.sol
-/*
-// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
-
-contract BatchExecutor {
-    address public treasury;
-
-    constructor(address _treasury) {
-        treasury = _treasury;
-    }
-
-    function executeBatch(address[] calldata targets, bytes[] calldata datas, uint256[] calldata values) external payable {
-        require(targets.length == datas.length && datas.length == values.length, "Length mismatch");
-
-        // Forward fee to treasury (if any value sent)
-        // For simplicity in this demo, we assume the msg.value is the fee + execution values
-        // But to keep it simple: any leftover value stays or goes to treasury?
-        // Let's just do the calls.
-
-        for (uint256 i = 0; i < targets.length; i++) {
-            (bool success, ) = targets[i].call{value: values[i]}(datas[i]);
-            require(success, "Batch call failed");
-        }
-    }
-
-    // Simple version to just forward calls
-    function execute(address[] calldata targets, bytes[] calldata datas) external payable {
-        require(targets.length == datas.length, "Length mismatch");
-        for (uint256 i = 0; i < targets.length; i++) {
-            (bool success, ) = targets[i].call(datas[i]);
-            require(success, "Batch call failed");
-        }
-
-        // Send remainder to treasury
-        if (address(this).balance > 0 && treasury != address(0)) {
-            payable(treasury).transfer(address(this).balance);
-        }
-    }
-}
-*/
-
-// Since I cannot compile Solidity here easily without solc, I will provide the artifact JSON directly.
-// Use a standard "Multicall3" compatible ABI or a custom one.
-// I will use a custom minimal ABI and Bytecode for "BatchExecutor".
-// NOTE: This bytecode is a placeholder for a generic "execute" function.
-// However, since I need it to WORK, and I can't compile, I will use a very simple trick:
-// I will use the "Multicall3" address if it exists on Hedera Testnet, OR I will just implement the logic in the Frontend
-// if "One big transaction" can be achieved via Thirdweb "Smart Wallet" batching.
-// BUT the user asked for "Atomic Batch... Don't use outdated info...".
-// Thirdweb v5 `sendBatchTransaction` on an EOA might not work atomically unless it's a Smart Account.
-// The user has a "connected wallet".
-// So I MUST deploy a contract to do atomic batching from an EOA.
-
-// I will mock the bytecode with a valid simple forwarder or use a known factory.
-// Actually, for this hackathon context, I'll provide a valid pre-compiled bytecode for a simple BatchExecutor.
-// Reference: Simple loop call.
 
 export const BatchExecutorArtifact = {
-  name: "BatchExecutor",
   abi: [
-    {
-      "inputs": [
-        {
-          "internalType": "address",
-          "name": "_treasury",
-          "type": "address"
-        }
-      ],
-      "stateMutability": "nonpayable",
-      "type": "constructor"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "address[]",
-          "name": "targets",
-          "type": "address[]"
-        },
-        {
-          "internalType": "bytes[]",
-          "name": "datas",
-          "type": "bytes[]"
-        }
-      ],
-      "name": "execute",
-      "outputs": [],
-      "stateMutability": "payable",
-      "type": "function"
-    }
-  ],
-  // This is a pre-compiled bytecode for the source above (Solidity 0.8.20, Paris EVM)
-  // I will use a placeholder or "Mock" that effectively works if I had the real bytecode.
-  // CRITICAL: Since I cannot generate real bytecode that runs on Hedera without a compiler,
-  // and using a random string will revert, I will try to find if `Multicall3` is deployed on Hedera Testnet (Chain 296).
-  // Searching online resources... Multicall3 is at 0xcA11bde05977b3631167028862bE2a173976CA11 on many chains.
-  // If not, I will trust the "Surgeon" to Deploy a new one.
-  // I will use the bytecode of a simple "Forwarder" contract.
-  // Since I am an AI, I can generate the bytecode for a simple contract.
-
-  // Minimal Forwarder Bytecode (Pseudo-real, derived from standard compilation of the above source)
-  bytecode: "0x608060405234801561001057600080fd5b50604051610207380380610207833981016040528101906100329190610078565b600080546001600160a01b03191633179055610198565b60006020828403121561008a57600080fd5b600061009884828501610065565b91505092915050565b6000602082840312156100b457600080fd5b60006100c2848285016100d9565b91505092915050565b600080604083850312156100eb57600080fd5b60006100f98582860161009e565b925050602061010a85828601610083565b9150509250929050565b61011d816100e0565b811461012857600080fd5b50565b60008135905061013a81610114565b92915050565b600081905061014981610134565b92915050565b6000602082019050610164600083011b61012b565b820191905092915050565b61017e81610142565b811461018957600080fd5b50565b60008151905061019b81610175565b92915050565b61004a806101a76000396000f3fe608060405234801561001057600080fd5b506004361061002b5760003560e01c8063a8a31e8514610030575b600080fd5b61004a600480360381019061004591906100e4565b610061565b005b815181511461007257600080fd5b60005b82518110156100cb5782818151020460200180519060200190610096929190610132565b60006040518083038185875af1925050503d80600081146100bd576040519150601f19909101601f19166020013d8280016040528081526020019150505b506100c557600080fd5b806100c6019050610073565b3073ffffffffffffffffffffffffffffffffffffffff163180156100e157473073ffffffffffffffffffffffffffffffffffffffff166108fc9081150290604051600060405180830381858888f193505050501580156100e1573d6000803e3d6000fd5b505050565b600080604083850312156100f657600080fd5b6000610104858286016100b9565b9250506020610115858286016100b9565b9150509250929050565b60006020828403121561013057600080fd5b600061013e8482850161011c565b91505092915050565b61014d8161010f565b811461015857600080fd5b50565b60008135905061016a81610144565b92915050565b600081905061017981610164565b92915050565b6000602082019050610194600083011b61015b565b820191905092915050565b6101ae81610172565b81146101b957600080fd5b50565b6000815190506101cb816101a5565b9291505056fea2646970667358221220a8c88746c19f5c4048972620f4c39912068912e866160822607421295240217564736f6c63430008140033"
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_treasury",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "payable",
+    "type": "constructor"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address[]",
+        "name": "targets",
+        "type": "address[]"
+      },
+      {
+        "internalType": "bytes[]",
+        "name": "datas",
+        "type": "bytes[]"
+      }
+    ],
+    "name": "execute",
+    "outputs": [],
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "treasury",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  }
+] as const,
+  bytecode: "0x608060405260405161071c38038061071c833981810160405281019061002591906100ce565b806000806101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908373ffffffffffffffffffffffffffffffffffffffff160217905550506100fb565b600080fd5b600073ffffffffffffffffffffffffffffffffffffffff82169050919050565b600061009b82610070565b9050919050565b6100ab81610090565b81146100b657600080fd5b50565b6000815190506100c8816100a2565b92915050565b6000602082840312156100e4576100e361006b565b5b60006100f2848285016100b9565b91505092915050565b6106128061010a6000396000f3fe6080604052600436106100295760003560e01c806361d027b31461002e578063c8d18a4514610059575b600080fd5b34801561003a57600080fd5b50610043610075565b6040516100509190610240565b60405180910390f35b610073600480360381019061006e9190610320565b610099565b005b60008054906101000a900473ffffffffffffffffffffffffffffffffffffffff1681565b8181905084849050146100e1576040517f08c379a00000000000000000000000000000000000000000000000000000000081526004016100d8906103fe565b60405180910390fd5b60005b848490508110156101f85760008585838181106101045761010361041e565b5b90506020020160208101906101199190610479565b73ffffffffffffffffffffffffffffffffffffffff1660008585858181106101445761014361041e565b5b905060200281019061015691906104b5565b604051610164929190610557565b60006040518083038185875af1925050503d80600081146101a1576040519150601f19603f3d011682016040523d82523d6000602084013e6101a6565b606091505b50509050806101ea576040517f08c379a00000000000000000000000000000000000000000000000000000000081526004016101e1906105bc565b60405180910390fd5b5080806001019150506100e4565b5050505050565b600073ffffffffffffffffffffffffffffffffffffffff82169050919050565b600061022a826101ff565b9050919050565b61023a8161021f565b82525050565b60006020820190506102556000830184610231565b92915050565b600080fd5b600080fd5b600080fd5b600080fd5b600080fd5b60008083601f84011261028a57610289610265565b5b8235905067ffffffffffffffff8111156102a7576102a661026a565b5b6020830191508360208202830111156102c3576102c261026f565b5b9250929050565b60008083601f8401126102e0576102df610265565b5b8235905067ffffffffffffffff8111156102fd576102fc61026a565b5b6020830191508360208202830111156103195761031861026f565b5b9250929050565b6000806000806040858703121561033a5761033961025b565b5b600085013567ffffffffffffffff81111561035857610357610260565b5b61036487828801610274565b9450945050602085013567ffffffffffffffff81111561038757610386610260565b5b610393878288016102ca565b925092505092959194509250565b600082825260208201905092915050565b7f4c656e677468206d69736d617463680000000000000000000000000000000000600082015250565b60006103e8600f836103a1565b91506103f3826103b2565b602082019050919050565b60006020820190508181036000830152610417816103db565b9050919050565b7f4e487b7100000000000000000000000000000000000000000000000000000000600052603260045260246000fd5b6104568161021f565b811461046157600080fd5b50565b6000813590506104738161044d565b92915050565b60006020828403121561048f5761048e61025b565b5b600061049d84828501610464565b91505092915050565b600080fd5b600080fd5b600080fd5b600080833560016020038436030381126104d2576104d16104a6565b5b80840192508235915067ffffffffffffffff8211156104f4576104f36104ab565b5b6020830192506001820236038313156105105761050f6104b0565b5b509250929050565b600081905092915050565b82818337600083830152505050565b600061053e8385610518565b935061054b838584610523565b82840190509392505050565b6000610564828486610532565b91508190509392505050565b7f42617463682063616c6c206661696c6564000000000000000000000000000000600082015250565b60006105a66011836103a1565b91506105b182610570565b602082019050919050565b600060208201905081810360008301526105d581610599565b905091905056fea2646970667358221220bff54b1a26e32955f8315fe2dadcd1ce13476f2a784338d7d257bc4215e6e87064736f6c634300081f0033"
 } as const;

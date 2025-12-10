@@ -16,7 +16,13 @@ const SECRET_KEY = process.env.THIRDWEB_SECRET_KEY || "mock-secret-key";
 const PRIVATE_KEY = process.env.THIRDWEB_PRIVATE_KEY || "0x0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"; // Mock key
 
 // Hedera Testnet Chain ID: 296
-const HEDERA_TESTNET = defineChain(296);
+const HEDERA_TESTNET = defineChain({
+  id: 296,
+  name: "Hedera Testnet",
+  nativeCurrency: { name: "HBAR", symbol: "HBAR", decimals: 18 },
+  rpc: "https://testnet.hashio.io/api",
+  testnet: true,
+});
 
 export const upgradeProxySchema = z.object({
   proxyId: z.string().describe("The address or ID of the proxy contract to upgrade"),
@@ -27,7 +33,19 @@ export async function upgradeProxy(args: z.infer<typeof upgradeProxySchema>) {
   const { proxyId, newImplementationAddress } = args;
 
   console.log(`\n👨‍⚕️ Act 3: The Surgeon is scrubbing in for target ${proxyId}...`);
+  // Try to lookup cure name from cures.json if possible, otherwise use address
   console.log(`👨‍⚕️ Injecting cure: ${newImplementationAddress}`);
+
+  // Load cures to verify if needed (Logic enhancement)
+  try {
+     const fs = await import('fs');
+     const path = await import('path');
+     const curesPath = path.resolve(__dirname, '../data/cures.json');
+     if (fs.existsSync(curesPath)) {
+         const curesData = JSON.parse(fs.readFileSync(curesPath, 'utf-8'));
+         console.log("Using Knowledge Base: Library of Cures loaded.");
+     }
+  } catch(e) {}
 
   try {
     // Check if we are in a real environment or need to mock

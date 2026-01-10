@@ -127,7 +127,21 @@ interface McpServerManagerActions {
 export type UseMcpServerManagerReturn = McpServerManagerState & McpServerManagerActions;
 
 function getMcpProxyWsUrl(): string {
-  const baseUrl = process.env.NEXT_PUBLIC_MCP_PROXY_WS_URL || 'ws://localhost:6050/client/ws';
+  // Ensure we have a valid WebSocket URL
+  let baseUrl = process.env.NEXT_PUBLIC_MCP_PROXY_WS_URL || 'ws://localhost:6050/client/ws';
+
+  // Fix relative URLs if they appear (e.g., from incorrect env var)
+  if (baseUrl.startsWith('/')) {
+    baseUrl = `ws://localhost:6050${baseUrl}`;
+  } else if (!baseUrl.includes('://')) {
+    baseUrl = `ws://localhost:6050/${baseUrl.replace(/^\/+/, '')}`;
+  }
+
+  // Ensure we're hitting the correct endpoint path if not specified
+  if (!baseUrl.includes('/client/ws')) {
+    baseUrl = baseUrl.endsWith('/') ? `${baseUrl}client/ws` : `${baseUrl}/client/ws`;
+  }
+
   return buildProxyUrl(baseUrl);
 }
 
@@ -289,17 +303,34 @@ export function useMcpServerManager(): UseMcpServerManagerReturn {
       return;
     }
 
-    updateState({ loading: true, error: null });
+    // Don't show loading on initial connect to avoid UI flash if local server is down
+    // updateState({ loading: true, error: null });
 
     try {
+      const wsUrl = getMcpProxyWsUrl();
+
+      // Check if we're in a deployed environment (HTTPS) but trying to connect to local WebSocket (ws://)
+      // This is often blocked by browsers as Mixed Content
+      if (typeof window !== 'undefined' &&
+          window.location.protocol === 'https:' &&
+          wsUrl.startsWith('ws://localhost')) {
+          console.warn('⚠️ Skipping WebSocket connection: Cannot connect to local WebSocket from HTTPS (Mixed Content)');
+          updateState({
+            connected: false,
+            error: null // Don't show error, just stay disconnected
+          });
+          return;
+      }
+
       // Create WebSocket connection directly to the MCP proxy server
-      const ws = new WebSocket(getMcpProxyWsUrl());
+      const ws = new WebSocket(wsUrl);
       wsRef.current = ws;
 
       ws.onopen = () => {
         updateState({ 
           loading: false, 
-          error: null
+          error: null,
+          connected: true
         });
         reconnectAttempts.current = 0;
       };
@@ -309,7 +340,8 @@ export function useMcpServerManager(): UseMcpServerManagerReturn {
       ws.onclose = () => {
         updateState({ 
           connected: false,
-          error: 'WebSocket connection closed' 
+          // Only show error if we were previously connected
+          error: reconnectAttempts.current > 0 ? 'WebSocket connection closed' : null
         });
         
         // Auto-reconnect logic
@@ -322,10 +354,12 @@ export function useMcpServerManager(): UseMcpServerManagerReturn {
         }
       };
 
-      ws.onerror = () => {
+      ws.onerror = (e) => {
+        // Quietly fail for localhost connection errors
+        console.warn('WebSocket connection error (likely local server not running):', e);
         updateState({ 
           loading: false,
-          error: 'WebSocket connection error' 
+          error: null // Don't spam UI with errors
         });
       };
 
@@ -333,7 +367,7 @@ export function useMcpServerManager(): UseMcpServerManagerReturn {
       console.error('Failed to create WebSocket connection:', error);
       updateState({ 
         loading: false,
-        error: 'Failed to connect'
+        error: null
       });
     }
   }, [handleWebSocketMessage, updateState]);

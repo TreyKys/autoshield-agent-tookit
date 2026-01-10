@@ -8,7 +8,7 @@ import { Brain } from './components/Brain';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ConnectButton, useActiveAccount } from "thirdweb/react";
 import { createThirdwebClient } from 'thirdweb';
-import { callAgent } from './lib/agent-client';
+import { callAgent } from './services/agent-client';
 
 // Client for ConnectButton
 const client = createThirdwebClient({

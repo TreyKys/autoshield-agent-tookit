@@ -429,18 +429,21 @@ export function ChatContainer({
         // Filter models by current provider if we have modelConfig
         const currentProvider = modelConfig?.provider;
         const providerModels = currentProvider 
-          ? models.filter(m => m.provider.toLowerCase() === currentProvider.toLowerCase())
+          ? models.filter(m => m.provider?.toLowerCase() === currentProvider.toLowerCase())
           : models;
         
         // Auto-select first model from current provider if no model selected or current model doesn't match provider
         const currentModelValid = selectedModel.id && providerModels.some(m => m.id === selectedModel.id);
         if (providerModels.length > 0 && (!selectedModel.id || !currentModelValid)) {
           const firstModel = providerModels[0];
-          setSelectedModel({
-            id: firstModel.id,
-            name: firstModel.name,
-            provider: firstModel.provider
-          });
+          // Ensure firstModel has required properties before setting
+          if (firstModel && firstModel.provider) {
+            setSelectedModel({
+              id: firstModel.id,
+              name: firstModel.name,
+              provider: firstModel.provider
+            });
+          }
         }
       } catch (error) {
         console.error('Error loading available models:', error);

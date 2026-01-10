@@ -409,6 +409,12 @@ export interface ProxyIdValidationResult {
 
 export async function checkServerHealth(): Promise<ServerHealthResponse | null> {
   try {
+    // If running in HTTPS, we can't fetch from http://localhost due to Mixed Content
+    if (typeof window !== "undefined" && window.location.protocol === "https:") {
+      console.debug("Skipping local health check due to HTTPS (Mixed Content)");
+      return null;
+    }
+
     const response = await fetch(LOCAL_SERVER_HEALTH_URL, {
       method: "GET",
       headers: {
@@ -425,7 +431,10 @@ export async function checkServerHealth(): Promise<ServerHealthResponse | null> 
     const healthData = (await response.json()) as ServerHealthResponse;
     return healthData;
   } catch (error) {
-    console.error("Failed to check server health:", error);
+    // Only log if it's not a connection refused (common when server is down)
+    if (error instanceof Error && !error.message.includes('Failed to fetch')) {
+        console.error("Failed to check server health:", error);
+    }
     return null;
   }
 }

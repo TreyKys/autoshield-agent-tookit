@@ -1,17 +1,19 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { CheckCircle, Lock, ExternalLink, ShieldCheck } from 'lucide-react';
+import { CheckCircle, Lock, ExternalLink, ShieldCheck, PauseCircle, ArrowUpCircle } from 'lucide-react';
 import { Button } from './ui';
 
 interface BrainProps {
-  txHash: string;
-  newImpl: string;
+  results: any[];
   onReset: () => void;
 }
 
-export function Brain({ txHash, newImpl, onReset }: BrainProps) {
+export function Brain({ results, onReset }: BrainProps) {
+  const upgradedCount = results.filter(r => r.type === 'upgrade' && r.success).length;
+  const pausedCount = results.filter(r => r.type === 'pause' && r.success).length;
+
   return (
-    <div className="flex flex-col items-center justify-center h-full text-brain">
+    <div className="flex flex-col items-center justify-center h-full text-brain w-full max-w-4xl mx-auto">
       <motion.div
         initial={{ scale: 0.5, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
@@ -24,37 +26,50 @@ export function Brain({ txHash, newImpl, onReset }: BrainProps) {
 
       <h2 className="text-3xl font-display mb-2">System Secured.</h2>
 
+      {/* Dynamic Summary Message */}
+      <p className="text-white/70 mb-8 text-center max-w-lg">
+          <span className="text-emerald-400 font-bold">{pausedCount}</span> contract{pausedCount !== 1 ? 's' : ''} wasn't upgradeable so it was paused instead. <br/>
+          <span className="text-emerald-400 font-bold">{upgradedCount}</span> contract{upgradedCount !== 1 ? 's' : ''} successfully upgraded.
+      </p>
+
       <motion.div
         initial={{ y: 50, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.2 }}
-        className="mt-8 p-6 glass-panel rounded-xl border-brain/30 max-w-lg w-full"
+        className="w-full grid grid-cols-1 gap-4 max-h-[400px] overflow-y-auto px-4 custom-scrollbar"
       >
-        <div className="space-y-4">
-            <div>
-                <label className="text-xs text-white/50 uppercase tracking-widest">Transaction Hash</label>
-                <div className="flex items-center gap-2 text-white font-mono text-sm truncate bg-black/20 p-2 rounded mt-1">
-                    <span className="truncate">{txHash || "0x00...000"}</span>
+        {results.map((res, idx) => (
+            <div key={idx} className="glass-panel p-4 rounded-xl border-brain/30 flex items-center justify-between group hover:bg-white/5 transition-colors">
+                <div className="flex items-center gap-4">
+                    <div className={`p-2 rounded-lg ${res.type === 'pause' ? 'bg-amber-500/20 text-amber-400' : 'bg-emerald-500/20 text-emerald-400'}`}>
+                        {res.type === 'pause' ? <PauseCircle className="w-5 h-5" /> : <ArrowUpCircle className="w-5 h-5" />}
+                    </div>
+                    <div>
+                        <div className="font-bold text-white text-sm">{res.name}</div>
+                        <div className="text-xs text-white/40 font-mono">{res.address}</div>
+                    </div>
+                </div>
+
+                <div className="flex items-center gap-4">
+                    <div className="text-right hidden md:block">
+                        <div className="text-xs text-white/50 uppercase tracking-widest">{res.type}d</div>
+                        <div className="text-xs font-mono text-brain truncate w-24">{res.txHash ? `${res.txHash.substring(0,6)}...${res.txHash.substring(res.txHash.length-4)}` : 'Failed'}</div>
+                    </div>
+
+                    {res.txHash && (
+                        <a
+                        href={`https://hashscan.io/testnet/transaction/${res.txHash}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-2 text-white/30 hover:text-white transition-colors"
+                        title="View on HashScan"
+                        >
+                            <ExternalLink className="w-4 h-4" />
+                        </a>
+                    )}
                 </div>
             </div>
-
-            <div>
-                <label className="text-xs text-white/50 uppercase tracking-widest">New Implementation</label>
-                <div className="flex items-center gap-2 text-white font-mono text-sm truncate bg-black/20 p-2 rounded mt-1">
-                     <span className="truncate">{newImpl || "0x00...000"}</span>
-                </div>
-            </div>
-
-            <a
-              href={`https://hashscan.io/testnet/transaction/${txHash}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center justify-center gap-2 text-brain hover:text-white transition-colors text-sm mt-4 p-2 border border-brain/30 rounded hover:bg-brain/10"
-            >
-                <ExternalLink className="w-4 h-4" />
-                Verified on Hashscan
-            </a>
-        </div>
+        ))}
       </motion.div>
 
       <motion.div

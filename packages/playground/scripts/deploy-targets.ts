@@ -10,8 +10,8 @@ const PLAYGROUND_TARGETS_PATH = path.resolve(__dirname, '../src/data/targets.jso
 const AGENT_TARGETS_PATH = path.resolve(__dirname, '../../nullshot-agent/src/data/targets.json');
 
 // Configuration
-const ACCOUNT_ID = "0.0.6928410";
-const PRIVATE_KEY = "0xcb7a3a82a8457f28bac3142ba94a7aac30dc68e23cb76f3e103be391b3850d62";
+const ACCOUNT_ID = "0.0.7160195";
+const PRIVATE_KEY = "0xc60bce878f9308a8a80f9b71bb3d4e69af0a5d958c676817238544a8b96715cc";
 
 // Map names to mock vulnerability types and contract type
 const CONTRACTS = [
